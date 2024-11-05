@@ -1,0 +1,3 @@
+﻿CREATE TYPE [dbo].[LargeKey_UDT]
+    FROM BIGINT NULL;
+

@@ -1,0 +1,3 @@
+﻿CREATE TYPE [dbo].[LookupValue_UDT]
+    FROM NVARCHAR (50) NOT NULL;
+

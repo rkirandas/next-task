@@ -1,0 +1,3 @@
+﻿CREATE TYPE [dbo].[LookupKey_UDT]
+    FROM SMALLINT NOT NULL;
+

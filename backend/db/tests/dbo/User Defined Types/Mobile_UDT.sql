@@ -1,0 +1,3 @@
+﻿CREATE TYPE [dbo].[Mobile_UDT]
+    FROM VARCHAR (15) NULL;
+

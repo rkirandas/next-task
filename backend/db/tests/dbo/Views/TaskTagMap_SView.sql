@@ -1,0 +1,21 @@
+﻿CREATE VIEW TaskTagMap_SView
+AS
+SELECT 
+	TT_ID_CPKFK,
+	TT_TagID_CPKFK
+FROM 
+	TaskTag_Map 
+WHERE 
+   TT_IsActive = 1
+
+GO
+
+CREATE TRIGGER TaskTag_SView_TRIGGER
+ON TaskTagMap_SView
+INSTEAD OF INSERT, UPDATE, DELETE
+AS
+BEGIN
+    RAISERROR ('This view is read-only.', 16, 1);
+END;
+
+

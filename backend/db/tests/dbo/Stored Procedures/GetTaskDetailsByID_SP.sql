@@ -1,0 +1,16 @@
+﻿CREATE PROCEDURE GetTaskDetailsByID_SP
+    @TaskID LargeKey_UDT
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+    SELECT TM.*,TT.TT_TagID_CPKFK
+    FROM 
+		TaskMaster_SView TM
+	INNER JOIN
+		TaskTagMap_SView TT
+    ON
+		TM_ID_PK = TT_ID_CPKFK
+	WHERE 
+		TM_ID_PK = @TaskID
+END;
