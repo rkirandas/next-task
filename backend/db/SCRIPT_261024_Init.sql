@@ -31,7 +31,7 @@ CREATE TYPE Description_UDT FROM NVARCHAR(1000);
 CREATE TYPE Mobile_UDT FROM VARCHAR(15);
 CREATE TYPE Email_UDT FROM VARCHAR(15);
 CREATE TYPE CountryCode_UDT FROM VARCHAR(5);
-CREATE TYPE Time_UDT FROM DATETIMEOFFSET;
+CREATE TYPE Time_UDT FROM INT; -- Timestamp
 /*End UDTs*/
 
 /* UDTT */
@@ -90,7 +90,7 @@ CREATE TABLE User_Master(
 	UM_CountryCode CountryCode_UDT,
 	UM_IsVerified  BIT NOT NULL DEFAULT 0,
 	UM_IsActive  BIT NOT NULL DEFAULT 1,
-	UM_CreatedAt Time_UDT NOT NULL DEFAULT GETUTCDATE(),
+	UM_CreatedAt DATETIME NOT NULL DEFAULT  SYSUTCDATETIME(),
     FOREIGN KEY (UM_UserType_FK) REFERENCES UserType_Lookup(UTL_ID_PK),
 );
 
@@ -113,7 +113,7 @@ CREATE TABLE Task_Master(
 	TM_Priority_FK LookupKey_UDT,
 	TM_IsArchived  BIT NOT NULL DEFAULT 0,
 	TM_IsActive  BIT NOT NULL DEFAULT 1,
-	TM_CreatedAt  Time_UDT NOT NULL DEFAULT GETUTCDATE(),
+	TM_CreatedAt  DATETIME NOT NULL DEFAULT  SYSUTCDATETIME(),
 	FOREIGN KEY (TM_UserID_FK) REFERENCES User_Master(UM_ID_PK),
 	FOREIGN KEY (TM_Status_FK) REFERENCES TaskStatus_Lookup(SL_ID_PK),
 	FOREIGN KEY (TM_Priority_FK) REFERENCES TaskPriority_Lookup(PL_ID_PK),
@@ -286,9 +286,11 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT * FROM TaskStatus_Lookup
-	SELECT * FROM TaskPriority_Lookup
-	SELECT * FROM Tag_Lookup
+	SELECT 'Status' AS [Lookup], TSL.SL_Name AS [Key], TSL.SL_ID_PK AS [Value] FROM TaskStatus_Lookup TSL WHERE TSL.SL_IsActive = 1
+	UNION ALL
+	SELECT 'Priority' AS [Lookup], TPL.PL_Name AS [Key], TPL.PL_ID_PK AS [Value] FROM TaskPriority_Lookup TPL  WHERE TPL.PL_IsActive = 1
+	UNION ALL
+	SELECT 'Tags' AS [Lookup], TL.TL_Name  AS [Key], TL.TL_ID_PK  AS [Value] FROM Tag_Lookup TL WHERE TL.TL_IsActive  = 1
 END
 
 
