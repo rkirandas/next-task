@@ -1,3 +1,3 @@
 ﻿CREATE TYPE [dbo].[Time_UDT]
-    FROM DATETIMEOFFSET (7) NULL;
+    FROM INT NULL;
 

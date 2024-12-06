@@ -8,7 +8,7 @@
     [UM_CountryCode] [dbo].[CountryCode_UDT] NULL,
     [UM_IsVerified]  BIT                     DEFAULT ((0)) NOT NULL,
     [UM_IsActive]    BIT                     DEFAULT ((1)) NOT NULL,
-    [UM_CreatedAt]   [dbo].[Time_UDT]        DEFAULT (getutcdate()) NOT NULL,
+    [UM_CreatedAt]   DATETIME                DEFAULT (sysutcdatetime()) NOT NULL,
     PRIMARY KEY CLUSTERED ([UM_ID_PK] ASC),
     FOREIGN KEY ([UM_UserType_FK]) REFERENCES [dbo].[UserType_Lookup] ([UTL_ID_PK])
 );
