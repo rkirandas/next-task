@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 
 	app "next-task-svc/application"
+	"next-task-svc/utils"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 
 	err := app.Start(ctx)
 	if err != nil {
-		log.Printf("failed to start app: %v", err)
+		log.Printf("Failed to start app! \n %v", err)
 	}
 }
 
@@ -47,10 +48,10 @@ func LoadConfig() app.Config {
 		log.Fatalf("Missing required environment variable: SQL_SERVER_CS")
 	}
 
-	// //sqlErr := utils.HealthCheckSQLServer(cfg.SqlServerCs)
+	sqlErr := utils.HealthCheckSQLServer(cfg.SqlServerCs)
 
-	// if sqlErr != nil {
-	// 	log.Fatalf("Shutting down!\n%s", sqlErr)
-	// }
+	if sqlErr != nil {
+		log.Fatalf("Shutting down!\n%s", sqlErr)
+	}
 	return cfg
 }
