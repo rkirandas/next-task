@@ -25,11 +25,11 @@ func HealthCheckSQLServer(connStr string) error {
 }
 
 // ExecuteSP executes the given SP name and returns the result map
-func ExecuteSP(sp string, connStr string, hasWrite bool) ([]map[string]any, error) {
+func ExecuteSP(sp string, connStr string, hasWrite bool, result any) error {
 	db, err := sql.Open("sqlserver", connStr)
 	if err != nil {
 		log.Printf("Unable to open connection: `%v`", err)
-		return nil, err
+		return err
 	}
 	defer db.Close()
 
@@ -50,53 +50,84 @@ func ExecuteSP(sp string, connStr string, hasWrite bool) ([]map[string]any, erro
 	rows, err := tx.Query(fmt.Sprintf("EXEC %s", sp))
 	if err != nil {
 		log.Printf("Failed to exec %s: `%v`", sp, err)
-		return nil, err
+		return err
 	}
 	defer rows.Close()
 
-	results := make([]map[string]any, 0)
-
-	err = parseResultSet(rows, &results)
-	if err != nil {
-		log.Printf("Failed to parse result set for %s: `%v`", sp, err)
-		return nil, err
+	if result == nil {
+		return nil
 	}
 
-	return results, nil
-}
-
-func parseResultSet(rows *sql.Rows, results *[]map[string]any) error {
-	cols, err := rows.ColumnTypes()
+	err = parseRows(rows, result)
 	if err != nil {
-		log.Printf("Error on getting column types")
+		log.Printf("Failed to parse result set for %s: `%v`", sp, err)
 		return err
 	}
 
-	var dbRow = make([]any, len(cols))
-	for i, col := range cols {
-		dbRow[i] = reflect.New(reflect.PointerTo(col.ScanType())).Interface()
+	return nil
+}
+
+func parseRowsV2(rows *sql.Rows, result *[]map[string]any) error {
+	cols, err := rows.Columns()
+	if err != nil {
+		return err
 	}
 
 	for rows.Next() {
-		result := make(map[string]any)
-		scanErr := rows.Scan(dbRow...)
-		if scanErr != nil {
-			log.Printf("Error on scanning row")
+		row := make([]any, len(cols))
+		rowPointers := make([]any, len(cols))
+		for i := range row {
+			rowPointers[i] = &row[i]
+		}
+
+		if err := rows.Scan(rowPointers...); err != nil {
 			return err
 		}
 
-		for i, dbCol := range dbRow {
-			result[cols[i].Name()] = nil
-			if reflectValue := reflect.Indirect(reflect.Indirect(reflect.ValueOf(dbCol))); reflectValue.IsValid() {
-				result[cols[i].Name()] = reflectValue.Interface()
-			}
+		res := make(map[string]any, 0)
+		for i, col := range cols {
+			res[col] = *(rowPointers[i].(*any))
 		}
-
-		*results = append(*results, result)
+		*result = append(*result, res)
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Printf("Error on getting rows")
+		return err
+	}
+
+	return nil
+}
+
+func parseRows(rows *sql.Rows, result any) error {
+	cols, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+
+	schema := reflect.New(reflect.TypeOf(result).Elem().Elem())
+	res := reflect.ValueOf(result).Elem()
+
+	for rows.Next() {
+		row := make([]any, len(cols))
+		rowPointers := make([]any, len(cols))
+		for i := range row {
+			rowPointers[i] = &row[i]
+		}
+
+		if err := rows.Scan(rowPointers...); err != nil {
+			return err
+		}
+
+		for i, col := range cols {
+			schema.Elem().FieldByName(col).Set(
+				reflect.ValueOf(row[i]).Convert(
+					schema.Elem().FieldByName(col).Type()))
+		}
+
+		res.Set(reflect.Append(res, reflect.Value(schema).Elem()))
+	}
+
+	if err := rows.Err(); err != nil {
 		return err
 	}
 
