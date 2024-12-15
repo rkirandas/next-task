@@ -1,6 +1,6 @@
 ﻿
 
-CREATE PROCEDURE AddUser_SP
+CREATE PROCEDURE addUser_SP
     @Name NVARCHAR(500) = NULL,
 	@UserType LookupKey_UDT = 5, -- Anonymous default
 	@ReturnValue LargeKey_UDT = NULL OUT

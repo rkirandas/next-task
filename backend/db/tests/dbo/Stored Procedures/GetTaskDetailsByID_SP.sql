@@ -4,7 +4,15 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-    SELECT TM.*,TT.TT_TagID_CPKFK
+    SELECT TM.TM_ID_PK			AS TaskID,
+		   TM.TM_Title			AS Title,
+		   TM.TM_Status_FK		AS [StatusID],
+		   TM.TM_StartTime		AS StartTime,
+		   TM.TM_EndTime		AS EndTime,
+		   TM.TM_IsArchived		AS IsArchived,
+		   TM.TM_Description	AS [Description],
+		   TM.TM_Priority_FK	AS [Priority],
+		   TT.TT_TagID_CPKFK	AS TagID
     FROM 
 		TaskMaster_SView TM
 	INNER JOIN

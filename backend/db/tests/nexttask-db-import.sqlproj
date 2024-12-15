@@ -81,7 +81,7 @@
     <Build Include="dbo\Stored Procedures\GetLookups_SP.sql" />
     <Build Include="dbo\Stored Procedures\GetActiveTasksByUser_SP.sql" />
     <Build Include="dbo\Stored Procedures\GetTaskDetailsByID_SP.sql" />
-    <Build Include="dbo\Stored Procedures\AddUser_SP.sql" />
+    <Build Include="dbo\Stored Procedures\addUser_SP.sql" />
     <Build Include="dbo\Stored Procedures\AddTask_SP.sql" />
     <Build Include="dbo\Stored Procedures\UpdateTask_SP.sql" />
     <Build Include="dbo\User Defined Types\LargeKey_UDT.sql" />

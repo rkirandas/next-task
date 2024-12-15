@@ -15,11 +15,15 @@ func (a *App) loadRoutes() {
 	})
 
 	router.Route("/misc", a.misc)
-	//router.Route("/task", a.task)
+	router.Route("/task", a.task)
 
 	a.router = router
 }
 
 func (a *App) misc(router chi.Router) {
 	router.Get("/lookup", a.GetLookups)
+}
+
+func (a *App) task(router chi.Router) {
+	router.Post("/add", a.AddTask)
 }

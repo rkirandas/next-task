@@ -13,6 +13,7 @@ BEGIN
 	BEGIN TRY
 		DECLARE @TaskID LargeKey_UDT = NEXT VALUE FOR Task_Master_Seq;
 		DECLARE @NewStatusID LookupKey_UDT = 5;
+
 		IF @UserID IS NULL -- Anonymous
 		BEGIN
 			EXEC AddUser_SP
@@ -24,7 +25,22 @@ BEGIN
 				RETURN
 			END
 		END
-		
+		ELSE  --Prevent task spamming by anony user
+		BEGIN 
+			DECLARE @IsAnonyUser BIT 
+			DECLARE @TaskCount SMALLINT = 0
+			SELECT @IsAnonyUser = COUNT(UM_ID_PK)  FROM UserMaster_SView  WHERE UM_ID_PK = @UserID AND UM_UserType_FK = 5
+			IF @IsAnonyUser = 1
+			BEGIN
+				SELECT @TaskCount = COUNT(TM_ID_PK) FROM TaskMaster_SView  WHERE TM_UserID_FK = @UserID AND TM_IsArchived = 0
+				IF @TaskCount > 500
+				BEGIN
+					SELECT 1 AS STATUS, 'Limit exceeded for anonymous user, try deleting older tasks.' , '' AS LOGMESSAGE,  '' AS ERRORSTATE, NULL AS RESULT
+					RETURN
+				END
+			END
+		END
+
 		INSERT INTO Task_Master(
 				TM_ID_PK,
 				TM_Title,
@@ -53,7 +69,7 @@ BEGIN
 				FROM @Tags;
 		END
 
-		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @TaskID AS RESULT
+		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @UserID AS RESULT
 
 		EXEC GetActiveTasksByUser_SP @UserID
 

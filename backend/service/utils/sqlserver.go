@@ -25,7 +25,7 @@ func HealthCheckSQLServer(connStr string) error {
 }
 
 // ExecuteSP executes the given SP name and returns the result map
-func ExecuteSP(sp string, connStr string, hasWrite bool, result any) error {
+func ExecuteSP(sp string, connStr string, result any) error {
 	db, err := sql.Open("sqlserver", connStr)
 	if err != nil {
 		log.Printf("Unable to open connection: `%v`", err)
@@ -58,40 +58,9 @@ func ExecuteSP(sp string, connStr string, hasWrite bool, result any) error {
 		return nil
 	}
 
-	err = parseRows(rows, result)
+	err = parseRows(rows, result.(*[]map[string]any))
 	if err != nil {
 		log.Printf("Failed to parse result set for %s: `%v`", sp, err)
-		return err
-	}
-
-	return nil
-}
-
-func parseRowsV2(rows *sql.Rows, result *[]map[string]any) error {
-	cols, err := rows.Columns()
-	if err != nil {
-		return err
-	}
-
-	for rows.Next() {
-		row := make([]any, len(cols))
-		rowPointers := make([]any, len(cols))
-		for i := range row {
-			rowPointers[i] = &row[i]
-		}
-
-		if err := rows.Scan(rowPointers...); err != nil {
-			return err
-		}
-
-		res := make(map[string]any, 0)
-		for i, col := range cols {
-			res[col] = *(rowPointers[i].(*any))
-		}
-		*result = append(*result, res)
-	}
-
-	if err := rows.Err(); err != nil {
 		return err
 	}
 
@@ -133,3 +102,36 @@ func parseRows(rows *sql.Rows, result any) error {
 
 	return nil
 }
+
+/* a bit faster by less type safe
+
+func parseRows(rows *sql.Rows, result *[]map[string]any) error {
+	cols, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+
+	for rows.Next() {
+		row := make([]any, len(cols))
+		rowPointers := make([]any, len(cols))
+		for i := range row {
+			rowPointers[i] = &row[i]
+		}
+
+		if err := rows.Scan(rowPointers...); err != nil {
+			return err
+		}
+
+		res := make(map[string]any, 0)
+		for i, col := range cols {
+			res[col] = *(rowPointers[i].(*any))
+		}
+		*result = append(*result, res)
+	}
+
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	return nil
+}*/

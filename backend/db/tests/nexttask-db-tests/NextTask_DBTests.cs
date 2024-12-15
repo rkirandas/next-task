@@ -49,10 +49,13 @@ namespace nexttask_db_tests
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition archivetask_success;
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction UpdateTask_Error_TestAction;
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition updatetask_user_err;
+            Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction AddTask_AnonyUserLimit_Success_TestAction;
+            Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition addtask_anonyuser_tasklimit;
             this.AddTask_SuccessData = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestActions();
             this.UpdateTask_SuccessData = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestActions();
             this.ArchiveTask_SuccessData = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestActions();
             this.UpdateTask_ErrorData = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestActions();
+            this.AddTask_AnonyUserLimit_SuccessData = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestActions();
             AddTask_Success_TestAction = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction();
             addtask_success = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
             addtask_anonymoususer_added = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
@@ -64,6 +67,8 @@ namespace nexttask_db_tests
             archivetask_success = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
             UpdateTask_Error_TestAction = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction();
             updatetask_user_err = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
+            AddTask_AnonyUserLimit_Success_TestAction = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction();
+            addtask_anonyuser_tasklimit = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
             // 
             // AddTask_Success_TestAction
             // 
@@ -88,7 +93,7 @@ namespace nexttask_db_tests
             addtask_anonymoususer_added.ExpectedValue = "5";
             addtask_anonymoususer_added.Name = "addtask_anonymoususer_added";
             addtask_anonymoususer_added.NullExpected = false;
-            addtask_anonymoususer_added.ResultSet = 5;
+            addtask_anonymoususer_added.ResultSet = 3;
             addtask_anonymoususer_added.RowNumber = 1;
             // 
             // UpdateTask_Success_TestAction
@@ -117,24 +122,6 @@ namespace nexttask_db_tests
             updatetask_title_updated.ResultSet = 2;
             updatetask_title_updated.RowNumber = 1;
             // 
-            // AddTask_SuccessData
-            // 
-            this.AddTask_SuccessData.PosttestAction = null;
-            this.AddTask_SuccessData.PretestAction = null;
-            this.AddTask_SuccessData.TestAction = AddTask_Success_TestAction;
-            // 
-            // UpdateTask_SuccessData
-            // 
-            this.UpdateTask_SuccessData.PosttestAction = null;
-            this.UpdateTask_SuccessData.PretestAction = null;
-            this.UpdateTask_SuccessData.TestAction = UpdateTask_Success_TestAction;
-            // 
-            // ArchiveTask_SuccessData
-            // 
-            this.ArchiveTask_SuccessData.PosttestAction = null;
-            this.ArchiveTask_SuccessData.PretestAction = null;
-            this.ArchiveTask_SuccessData.TestAction = ArchiveTask_Success_TestAction;
-            // 
             // ArchiveTask_Success_TestAction
             // 
             ArchiveTask_Success_TestAction.Conditions.Add(archivetask_result);
@@ -157,12 +144,6 @@ namespace nexttask_db_tests
             archivetask_success.ResultSet = 1;
             archivetask_success.RowNumber = 1;
             // 
-            // UpdateTask_ErrorData
-            // 
-            this.UpdateTask_ErrorData.PosttestAction = null;
-            this.UpdateTask_ErrorData.PretestAction = null;
-            this.UpdateTask_ErrorData.TestAction = UpdateTask_Error_TestAction;
-            // 
             // UpdateTask_Error_TestAction
             // 
             UpdateTask_Error_TestAction.Conditions.Add(updatetask_user_err);
@@ -177,6 +158,51 @@ namespace nexttask_db_tests
             updatetask_user_err.NullExpected = false;
             updatetask_user_err.ResultSet = 1;
             updatetask_user_err.RowNumber = 1;
+            // 
+            // AddTask_AnonyUserLimit_Success_TestAction
+            // 
+            AddTask_AnonyUserLimit_Success_TestAction.Conditions.Add(addtask_anonyuser_tasklimit);
+            resources.ApplyResources(AddTask_AnonyUserLimit_Success_TestAction, "AddTask_AnonyUserLimit_Success_TestAction");
+            // 
+            // addtask_anonyuser_tasklimit
+            // 
+            addtask_anonyuser_tasklimit.ColumnNumber = 1;
+            addtask_anonyuser_tasklimit.Enabled = true;
+            addtask_anonyuser_tasklimit.ExpectedValue = "1";
+            addtask_anonyuser_tasklimit.Name = "addtask_anonyuser_tasklimit";
+            addtask_anonyuser_tasklimit.NullExpected = false;
+            addtask_anonyuser_tasklimit.ResultSet = 1;
+            addtask_anonyuser_tasklimit.RowNumber = 1;
+            // 
+            // AddTask_SuccessData
+            // 
+            this.AddTask_SuccessData.PosttestAction = null;
+            this.AddTask_SuccessData.PretestAction = null;
+            this.AddTask_SuccessData.TestAction = AddTask_Success_TestAction;
+            // 
+            // UpdateTask_SuccessData
+            // 
+            this.UpdateTask_SuccessData.PosttestAction = null;
+            this.UpdateTask_SuccessData.PretestAction = null;
+            this.UpdateTask_SuccessData.TestAction = UpdateTask_Success_TestAction;
+            // 
+            // ArchiveTask_SuccessData
+            // 
+            this.ArchiveTask_SuccessData.PosttestAction = null;
+            this.ArchiveTask_SuccessData.PretestAction = null;
+            this.ArchiveTask_SuccessData.TestAction = ArchiveTask_Success_TestAction;
+            // 
+            // UpdateTask_ErrorData
+            // 
+            this.UpdateTask_ErrorData.PosttestAction = null;
+            this.UpdateTask_ErrorData.PretestAction = null;
+            this.UpdateTask_ErrorData.TestAction = UpdateTask_Error_TestAction;
+            // 
+            // AddTask_AnonyUserLimit_SuccessData
+            // 
+            this.AddTask_AnonyUserLimit_SuccessData.PosttestAction = null;
+            this.AddTask_AnonyUserLimit_SuccessData.PretestAction = null;
+            this.AddTask_AnonyUserLimit_SuccessData.TestAction = AddTask_AnonyUserLimit_Success_TestAction;
         }
 
         #endregion
@@ -289,6 +315,30 @@ namespace nexttask_db_tests
                 SqlExecutionResult[] posttestResults = TestService.Execute(this.PrivilegedContext, this.PrivilegedContext, testActions.PosttestAction);
             }
         }
+        [TestMethod()]
+        public void AddTask_AnonyUserLimit_Success()
+        {
+            SqlDatabaseTestActions testActions = this.AddTask_AnonyUserLimit_SuccessData;
+            // Execute the pre-test script
+            // 
+            System.Diagnostics.Trace.WriteLineIf((testActions.PretestAction != null), "Executing pre-test script...");
+            SqlExecutionResult[] pretestResults = TestService.Execute(this.PrivilegedContext, this.PrivilegedContext, testActions.PretestAction);
+            try
+            {
+                // Execute the test script
+                // 
+                System.Diagnostics.Trace.WriteLineIf((testActions.TestAction != null), "Executing test script...");
+                SqlExecutionResult[] testResults = TestService.Execute(this.ExecutionContext, this.PrivilegedContext, testActions.TestAction);
+            }
+            finally
+            {
+                // Execute the post-test script
+                // 
+                System.Diagnostics.Trace.WriteLineIf((testActions.PosttestAction != null), "Executing post-test script...");
+                SqlExecutionResult[] posttestResults = TestService.Execute(this.PrivilegedContext, this.PrivilegedContext, testActions.PosttestAction);
+            }
+        }
+
 
 
 
@@ -296,5 +346,6 @@ namespace nexttask_db_tests
         private SqlDatabaseTestActions UpdateTask_SuccessData;
         private SqlDatabaseTestActions ArchiveTask_SuccessData;
         private SqlDatabaseTestActions UpdateTask_ErrorData;
+        private SqlDatabaseTestActions AddTask_AnonyUserLimit_SuccessData;
     }
 }

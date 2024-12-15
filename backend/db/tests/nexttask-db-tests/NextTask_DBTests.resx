@@ -119,22 +119,12 @@
   </resheader>
   <data name="AddTask_Success_TestAction.SqlScript" xml:space="preserve">
     <value>-- database unit test for dbo.AddTask_SP
-/* 
-Assumptions
-------------
-* User Master is empty
+DECLARE @UserID AS [dbo].[LargeKey_UDT], @Title AS NVARCHAR (100)= 'Test Task 1', 
+		@Priority AS [dbo].[LookupKey_UDT] = 5, @Tags AS [dbo].[TaskTag_UDTT];
 
-*/
-DECLARE @RC AS INT, @UserID AS [dbo].[LargeKey_UDT], @Title AS NVARCHAR (100), @Description AS NVARCHAR (1000), @StartTime AS [dbo].[Time_UDT], @EndTime AS [dbo].[Time_UDT], @Priority AS [dbo].[LookupKey_UDT], @Tags AS [dbo].[TaskTag_UDTT];
+EXECUTE [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL, @Priority, @Tags;
 
-SELECT @RC = 0,
-       @Title = 'Test Task 1',
-       @Priority = 5;
-
-EXECUTE @RC = [dbo].[AddTask_SP] @UserID, @Title, @Description, @StartTime, @EndTime, @Priority, @Tags;
-
-SELECT @RC AS RC;
-SELECT * FROM [dbo].[UserMaster_SView] -- Not a unit test anymore? :P
+SELECT @UserID 
 
 </value>
   </data>
@@ -147,17 +137,15 @@ Assumptions
 
 */
 
-DECLARE @RC AS INT,
-		@UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[User_Master_SEQ] ,
+DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[User_Master_SEQ] ,
 		@TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
-		@Title AS NVARCHAR (100),
-		@Description AS NVARCHAR (1000) = NULL,
-		@StartTime AS [dbo].[Time_UDT] = NULL,
-		@EndTime AS [dbo].[Time_UDT]= NULL,
-		@Priority AS [dbo].[LookupKey_UDT] = NULL, 
+		@Title AS NVARCHAR (100)= 'TEST',
+		@Name AS NVARCHAR (100)= 'TEST',
+		@UserType  AS [dbo].[LookupKey_UDT] = 5,
+		@Priority AS [dbo].[LookupKey_UDT] = 5, 
 		@Tags AS [dbo].[TaskTag_UDTT],
 		@IsArchived AS BIT = 0,
-		@Status AS [dbo].[LookupKey_UDT];
+		@Status AS [dbo].[LookupKey_UDT] = 5;
 
 -- Pre Req
 
@@ -168,8 +156,8 @@ INSERT INTO [dbo].[User_Master]
            )
      VALUES
            (@UserID
-           ,5
-           ,'Anony1')
+           ,@UserType
+           ,@Name)
 
 INSERT INTO [dbo].[Task_Master]
            ([TM_ID_PK]
@@ -181,21 +169,18 @@ INSERT INTO [dbo].[Task_Master]
      VALUES
            (@TaskID
            ,@UserID
-           ,'TEST'
-           ,5
-		   ,5)
+           ,@Title
+           ,@Status
+		   ,@Priority)
 
 -- End
 
 	
-SELECT @RC = 0,
-       @Title = 'TEST UPDATED',
-       @Priority = 5,
-       @Status = 5
+SET    @Title = 'TEST UPDATED'
+    
+EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
 
-EXECUTE @RC = [dbo].[UpdateTask_SP]  @TaskID, @Title, @Description, @StartTime, @EndTime, @Priority, @Tags, @IsArchived, @Status;
 
-SELECT @RC AS RC;
 
 
 </value>
@@ -209,17 +194,16 @@ Assumptions
 
 */
 
-DECLARE @RC AS INT,
+DECLARE 
 		@UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[User_Master_SEQ] ,
 		@TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
-		@Title AS NVARCHAR (100),
-		@Description AS NVARCHAR (1000) = NULL,
-		@StartTime AS [dbo].[Time_UDT] = NULL,
-		@EndTime AS [dbo].[Time_UDT]= NULL,
-		@Priority AS [dbo].[LookupKey_UDT] = NULL, 
+		@Title AS NVARCHAR (100) = 'Test',
+		@UserName AS NVARCHAR (100) = 'Test',
+		@Priority AS [dbo].[LookupKey_UDT] = 5, 
+		@UserType AS [dbo].[LookupKey_UDT] = 5, 
 		@Tags AS [dbo].[TaskTag_UDTT],
 		@IsArchived AS BIT = 1,
-		@Status AS [dbo].[LookupKey_UDT];
+		@Status AS [dbo].[LookupKey_UDT] = 5;
 
 -- Pre Req
 
@@ -230,8 +214,8 @@ INSERT INTO [dbo].[User_Master]
            )
      VALUES
            (@UserID
-           ,5
-           ,'Anony1')
+           ,@UserType
+           ,@UserName)
 
 INSERT INTO [dbo].[Task_Master]
            ([TM_ID_PK]
@@ -243,21 +227,22 @@ INSERT INTO [dbo].[Task_Master]
      VALUES
            (@TaskID
            ,@UserID
-           ,'TEST'
-           ,5
-		   ,5)
+           ,@Title
+           ,@Status
+		   ,@Priority)
 
 -- End
 
 
-EXECUTE @RC = [dbo].[UpdateTask_SP]  @TaskID, @Title, @Description, @StartTime, @EndTime, @Priority, @Tags, @IsArchived, @Status;
+EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
 
-SELECT @RC AS RC;
+
 
 </value>
   </data>
   <data name="UpdateTask_Error_TestAction.SqlScript" xml:space="preserve">
     <value>-- database unit test for dbo.UpdateTask_SP
+-- Tests for failure on updating non existing taskid
 /* 
 Assumptions
 ------------
@@ -265,32 +250,77 @@ Assumptions
 
 */
 
-DECLARE @RC AS INT,
-		@TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
-		@Title AS NVARCHAR (100),
-		@Description AS NVARCHAR (1000) = NULL,
-		@StartTime AS [dbo].[Time_UDT] = NULL,
-		@EndTime AS [dbo].[Time_UDT]= NULL,
-		@Priority AS [dbo].[LookupKey_UDT] = NULL, 
+DECLARE @TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
+		@Title AS NVARCHAR (100) = 'TEST UPDATED',
+		@Priority AS [dbo].[LookupKey_UDT] = 5, 
 		@Tags AS [dbo].[TaskTag_UDTT],
 		@IsArchived AS BIT = 0,
-		@Status AS [dbo].[LookupKey_UDT];
+		@Status AS [dbo].[LookupKey_UDT] = 5;
 
 
 -- End
 
-	
-SELECT @RC = 0,
-       @Title = 'TEST UPDATED',
-       @Priority = 5,
-       @Status = 5
+EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
 
-EXECUTE @RC = [dbo].[UpdateTask_SP]  @TaskID, @Title, @Description, @StartTime, @EndTime, @Priority, @Tags, @IsArchived, @Status;
 
-SELECT @RC AS RC;
 
 
 </value>
+  </data>
+  <data name="AddTask_AnonyUserLimit_Success_TestAction.SqlScript" xml:space="preserve">
+    <value>-- database unit test for dbo.AddTask_SP
+-- Checking the limit of tasks that can be added by anonymous user
+DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR User_Master_SEQ,
+		@UserType AS [dbo].[LookupKey_UDT] = 5, 
+		@Counter AS INT = 1,
+		@Name AS NVARCHAR(500) = 'Anony',
+		@ReturnValue AS [dbo].[LargeKey_UDT],
+		@Title AS NVARCHAR (100),
+		@Priority AS [dbo].[LookupKey_UDT] = 5, 
+		@Status AS [dbo].[LookupKey_UDT] = 5, 
+		@TaskID AS LargeKey_UDT,
+		@Tags AS [dbo].[TaskTag_UDTT];
+
+
+
+		INSERT INTO User_Master(
+				UM_ID_PK,
+				UM_UserType_FK,
+				UM_Name)
+		VALUES (
+		        @UserID,
+				@UserType,
+				@Name
+				);				
+
+WHILE @Counter &lt;= 1000
+BEGIN
+	SET  @Title =  'Test Task ' + CAST( LEFT(NEWID(), 4 ) AS  VARCHAR);
+	INSERT INTO Task_Master(
+				TM_ID_PK,
+				TM_Title,
+				TM_Description,
+				TM_UserID_FK,
+				TM_Status_FK,
+				TM_StartTime,
+				TM_EndTime,
+				TM_Priority_FK
+				)
+		VALUES (
+				NEXT VALUE FOR Task_Master_Seq,
+				@Title,
+				NULL,
+				@UserID,
+				@Status, 
+				NULL,
+				NULL,
+				@Priority
+				);
+
+    SET @Counter = @Counter + 1;
+END;
+
+EXECUTE  [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL,@Priority, @Tags;</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>

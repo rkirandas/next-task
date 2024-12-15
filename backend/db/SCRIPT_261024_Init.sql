@@ -4,7 +4,7 @@
 *FR003 - Edit tasks
 *FR004 - Complete Task
 *FR005 - Delete Task
-*FR006 - Auto Prioritize Tasks
+*FR006 - Prioritize Tasks
 
 TODO - Add description for SPs
 */
@@ -286,11 +286,20 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-	SELECT 'Status' AS [Lookup], TSL.SL_Name AS [Key], TSL.SL_ID_PK AS [Value] FROM TaskStatus_Lookup TSL WHERE TSL.SL_IsActive = 1
+	SELECT  'Status' AS [Lookup],
+			TSL.SL_Name AS [Key],
+			TSL.SL_ID_PK AS [Value] 
+	FROM TaskStatus_Lookup TSL WHERE TSL.SL_IsActive = 1
 	UNION ALL
-	SELECT 'Priority' AS [Lookup], TPL.PL_Name AS [Key], TPL.PL_ID_PK AS [Value] FROM TaskPriority_Lookup TPL  WHERE TPL.PL_IsActive = 1
+	SELECT  'Priority' AS [Lookup],
+			TPL.PL_Name AS [Key],
+			TPL.PL_ID_PK AS [Value]
+	FROM TaskPriority_Lookup TPL  WHERE TPL.PL_IsActive = 1
 	UNION ALL
-	SELECT 'Tags' AS [Lookup], TL.TL_Name  AS [Key], TL.TL_ID_PK  AS [Value] FROM Tag_Lookup TL WHERE TL.TL_IsActive  = 1
+	SELECT 'Tags' AS [Lookup],
+			TL.TL_Name  AS [Key],
+			TL.TL_ID_PK  AS [Value]
+	FROM Tag_Lookup TL WHERE TL.TL_IsActive  = 1
 END
 
 
@@ -304,7 +313,14 @@ AS
 BEGIN 
 	SET NOCOUNT ON;
 
-    SELECT *
+    SELECT 
+	   TM_ID_PK			AS TaskID,
+	   TM_Title			AS Title,
+	   TM_Description	AS [Description],
+	   TM_Status_FK		AS [StatusID],
+	   TM_StartTime		AS StartTime,
+	   TM_EndTime		AS EndTime,
+	   TM_Priority_FK	AS [Priority]
     FROM 
 		TaskMaster_SView TM
 	WHERE
@@ -325,7 +341,15 @@ AS
 BEGIN
 	SET NOCOUNT ON;
 
-    SELECT TM.*,TT.TT_TagID_CPKFK
+    SELECT TM.TM_ID_PK			AS TaskID,
+		   TM.TM_Title			AS Title,
+		   TM.TM_Status_FK		AS [StatusID],
+		   TM.TM_StartTime		AS StartTime,
+		   TM.TM_EndTime		AS EndTime,
+		   -- TM.TM_IsArchived		AS IsArchived,
+		   TM.TM_Description	AS [Description],
+		   TM.TM_Priority_FK	AS [Priority],
+		   TT.TT_TagID_CPKFK	AS TagID
     FROM 
 		TaskMaster_SView TM
 	INNER JOIN
@@ -338,7 +362,7 @@ END;
 GO
 
 
-CREATE PROCEDURE AddUser_SP
+CREATE PROCEDURE addUser_SP
     @Name NVARCHAR(500) = NULL,
 	@UserType LookupKey_UDT = 5, -- Anonymous default
 	@ReturnValue LargeKey_UDT = NULL OUT
@@ -389,6 +413,7 @@ BEGIN
 	BEGIN TRY
 		DECLARE @TaskID LargeKey_UDT = NEXT VALUE FOR Task_Master_Seq;
 		DECLARE @NewStatusID LookupKey_UDT = 5;
+
 		IF @UserID IS NULL -- Anonymous
 		BEGIN
 			EXEC AddUser_SP
@@ -400,7 +425,22 @@ BEGIN
 				RETURN
 			END
 		END
-		
+		ELSE  --Prevent task spamming by anony user
+		BEGIN 
+			DECLARE @IsAnonyUser BIT 
+			DECLARE @TaskCount SMALLINT = 0
+			SELECT @IsAnonyUser = COUNT(UM_ID_PK)  FROM UserMaster_SView  WHERE UM_ID_PK = @UserID AND UM_UserType_FK = 5
+			IF @IsAnonyUser = 1
+			BEGIN
+				SELECT @TaskCount = COUNT(TM_ID_PK) FROM TaskMaster_SView  WHERE TM_UserID_FK = @UserID AND TM_IsArchived = 0
+				IF @TaskCount > 500
+				BEGIN
+					SELECT 1 AS STATUS, 'Limit exceeded for anonymous user, try deleting older tasks.' , '' AS LOGMESSAGE,  '' AS ERRORSTATE, NULL AS RESULT
+					RETURN
+				END
+			END
+		END
+
 		INSERT INTO Task_Master(
 				TM_ID_PK,
 				TM_Title,
@@ -429,7 +469,7 @@ BEGIN
 				FROM @Tags;
 		END
 
-		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @TaskID AS RESULT
+		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @UserID AS RESULT
 
 		EXEC GetActiveTasksByUser_SP @UserID
 
