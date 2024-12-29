@@ -25,5 +25,7 @@ func (a *App) misc(router chi.Router) {
 }
 
 func (a *App) task(router chi.Router) {
-	router.Post("/add", a.AddTask)
+	router.Post("/", a.AddTask)
+	router.Put("/{id}", a.UpdateTask)
+	router.Post("/byuser", a.GetTaskbyUser)
 }

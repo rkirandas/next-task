@@ -124,7 +124,6 @@ DECLARE @UserID AS [dbo].[LargeKey_UDT], @Title AS NVARCHAR (100)= 'Test Task 1'
 
 EXECUTE [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL, @Priority, @Tags;
 
-SELECT @UserID 
 
 </value>
   </data>

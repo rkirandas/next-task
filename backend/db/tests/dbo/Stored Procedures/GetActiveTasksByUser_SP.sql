@@ -9,11 +9,10 @@ BEGIN
     SELECT 
 	   TM_ID_PK			AS TaskID,
 	   TM_Title			AS Title,
+	   TM_Description	AS [Description],
 	   TM_Status_FK		AS [StatusID],
 	   TM_StartTime		AS StartTime,
 	   TM_EndTime		AS EndTime,
-	   TM_IsArchived	AS IsArchived,
-	   TM_Description	AS [Description],
 	   TM_Priority_FK	AS [Priority]
     FROM 
 		TaskMaster_SView TM

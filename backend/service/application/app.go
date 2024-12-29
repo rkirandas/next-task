@@ -4,7 +4,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 )
@@ -36,8 +35,7 @@ func (a *App) Start(ctx context.Context) error {
 		Addr:    fmt.Sprintf(":%d", a.config.ServerPort),
 		Handler: a.router,
 	}
-
-	log.Printf("Starting server")
+	fmt.Println("Starting server")
 
 	ch := make(chan error, 1)
 

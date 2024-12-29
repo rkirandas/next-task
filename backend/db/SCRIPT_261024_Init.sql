@@ -31,7 +31,7 @@ CREATE TYPE Description_UDT FROM NVARCHAR(1000);
 CREATE TYPE Mobile_UDT FROM VARCHAR(15);
 CREATE TYPE Email_UDT FROM VARCHAR(15);
 CREATE TYPE CountryCode_UDT FROM VARCHAR(5);
-CREATE TYPE Time_UDT FROM INT; -- Timestamp
+CREATE TYPE Time_UDT FROM BIGINT; --  Unix epoch time 
 /*End UDTs*/
 
 /* UDTT */
@@ -90,7 +90,7 @@ CREATE TABLE User_Master(
 	UM_CountryCode CountryCode_UDT,
 	UM_IsVerified  BIT NOT NULL DEFAULT 0,
 	UM_IsActive  BIT NOT NULL DEFAULT 1,
-	UM_CreatedAt DATETIME NOT NULL DEFAULT  SYSUTCDATETIME(),
+	UM_CreatedAt Time_UDT NOT NULL DEFAULT  DATEDIFF_BIG(millisecond, '1970-01-01 00:00:00', GETUTCDATE()),
     FOREIGN KEY (UM_UserType_FK) REFERENCES UserType_Lookup(UTL_ID_PK),
 );
 
@@ -113,7 +113,7 @@ CREATE TABLE Task_Master(
 	TM_Priority_FK LookupKey_UDT,
 	TM_IsArchived  BIT NOT NULL DEFAULT 0,
 	TM_IsActive  BIT NOT NULL DEFAULT 1,
-	TM_CreatedAt  DATETIME NOT NULL DEFAULT  SYSUTCDATETIME(),
+	TM_CreatedAt  Time_UDT NOT NULL DEFAULT DATEDIFF_BIG(millisecond, '1970-01-01 00:00:00', GETUTCDATE()),
 	FOREIGN KEY (TM_UserID_FK) REFERENCES User_Master(UM_ID_PK),
 	FOREIGN KEY (TM_Status_FK) REFERENCES TaskStatus_Lookup(SL_ID_PK),
 	FOREIGN KEY (TM_Priority_FK) REFERENCES TaskPriority_Lookup(PL_ID_PK),
@@ -302,8 +302,6 @@ BEGIN
 	FROM Tag_Lookup TL WHERE TL.TL_IsActive  = 1
 END
 
-
-
 GO
 CREATE PROCEDURE GetActiveTasksByUser_SP
     @UserID		LargeKey_UDT,
@@ -313,55 +311,62 @@ AS
 BEGIN 
 	SET NOCOUNT ON;
 
-    SELECT 
-	   TM_ID_PK			AS TaskID,
-	   TM_Title			AS Title,
-	   TM_Description	AS [Description],
-	   TM_Status_FK		AS [StatusID],
-	   TM_StartTime		AS StartTime,
-	   TM_EndTime		AS EndTime,
-	   TM_Priority_FK	AS [Priority]
-    FROM 
-		TaskMaster_SView TM
-	WHERE
-		TM_UserID_FK = @UserID
-	AND
-		TM_IsArchived = 0
-	ORDER BY
-		TM_Priority_FK DESC
-	OFFSET (@PageIndex) * @PageSize ROWS
-	FETCH NEXT @PageSize ROWS ONLY
-END 
+	SELECT 
+		   TM_ID_PK			AS TaskID,
+		   TM_Title			AS Title,
+		   TM_Description	AS [Description],
+		   TM_Status_FK		AS [Status],
+		   TM_StartTime		AS StartTime,
+		   TM_EndTime		AS EndTime,
+		   TM_Priority_FK	AS [Priority],
+		   TM_UserID_FK		AS UserID,
+		   STRING_AGG(TT.TT_TagID_CPKFK, ',')	AS Tags
+		FROM 
+			TaskMaster_SView TM
+		INNER JOIN
+			TaskTagMap_SView TT
+		ON 
+			TM.TM_ID_PK = TT.TT_ID_CPKFK
+		WHERE
+			TM_UserID_FK = @UserID
+		AND
+			TM_IsArchived = 0
+		GROUP BY 
+			TM.TM_ID_PK,TM.TM_Title,TM.TM_Status_FK,TM.TM_StartTime,TM.TM_EndTime,TM.TM_Description,TM.TM_Priority_FK,TM.TM_UserID_FK	
+		ORDER BY
+			TM_Priority_FK DESC
+		OFFSET (@PageIndex) * @PageSize ROWS
+		FETCH NEXT @PageSize ROWS ONLY
+END
 
+--Go
+--CREATE PROCEDURE GetTaskDetailsByID_SP
+--    @TaskID LargeKey_UDT
+--AS
+--BEGIN
+--	SET NOCOUNT ON;
 
+--    SELECT TM.TM_ID_PK							AS TaskID,
+--		   TM.TM_Title							AS Title,
+--		   TM.TM_Status_FK						AS [Status],
+--		   TM.TM_StartTime						AS StartTime,
+--		   TM.TM_EndTime						AS EndTime,
+--		   -- TM.TM_IsArchived					AS IsArchived,
+--		   TM.TM_Description					AS [Description],
+--		   TM.TM_Priority_FK					AS [Priority],
+--		   STRING_AGG(TT.TT_TagID_CPKFK, ',')	AS TagID
+--    FROM 
+--		TaskMaster_SView TM
+--	INNER JOIN
+--		TaskTagMap_SView TT
+--    ON
+--		TM_ID_PK = TT_ID_CPKFK
+--	WHERE 
+--		TM_ID_PK = @TaskID
+--	GROUP BY 
+--		TM.TM_ID_PK,TM.TM_Title,TM.TM_Status_FK,TM.TM_StartTime,TM.TM_EndTime,TM.TM_Description,TM.TM_Priority_FK
+--END;
 GO
-CREATE PROCEDURE GetTaskDetailsByID_SP
-    @TaskID LargeKey_UDT
-AS
-BEGIN
-	SET NOCOUNT ON;
-
-    SELECT TM.TM_ID_PK			AS TaskID,
-		   TM.TM_Title			AS Title,
-		   TM.TM_Status_FK		AS [StatusID],
-		   TM.TM_StartTime		AS StartTime,
-		   TM.TM_EndTime		AS EndTime,
-		   -- TM.TM_IsArchived		AS IsArchived,
-		   TM.TM_Description	AS [Description],
-		   TM.TM_Priority_FK	AS [Priority],
-		   TT.TT_TagID_CPKFK	AS TagID
-    FROM 
-		TaskMaster_SView TM
-	INNER JOIN
-		TaskTagMap_SView TT
-    ON
-		TM_ID_PK = TT_ID_CPKFK
-	WHERE 
-		TM_ID_PK = @TaskID
-END;
-GO
-
-
 CREATE PROCEDURE addUser_SP
     @Name NVARCHAR(500) = NULL,
 	@UserType LookupKey_UDT = 5, -- Anonymous default
@@ -388,10 +393,9 @@ BEGIN
 				);
 
 		SET @ReturnValue = @UserID
-		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @ReturnValue AS RESULT
 	END TRY
 	BEGIN CATCH
-		SELECT 2 AS STATUS, ERROR_MESSAGE() AS MESSAGE , dbo.FormatedErrorMessage_FUNC() AS LOGMESSAGE,  ERROR_STATE() AS ERRORSTATE, NULL AS RESULT
+		SELECT 2 AS STATUS, ERROR_MESSAGE() AS MESSAGE , dbo.FormatedErrorMessage_FUNC() AS LOGMESSAGE, NULL AS RESULT
 	END CATCH
 END
 GO
@@ -421,7 +425,7 @@ BEGIN
 
 			IF @UserID IS NULL
 			BEGIN
-				SELECT 2 AS STATUS, 'Failed to add anonymous user' , '' AS LOGMESSAGE,  '' AS ERRORSTATE, NULL AS RESULT
+				SELECT 2 AS STATUS, 'Failed to add anonymous user' , '' AS LOGMESSAGE, NULL AS RESULT
 				RETURN
 			END
 		END
@@ -435,7 +439,7 @@ BEGIN
 				SELECT @TaskCount = COUNT(TM_ID_PK) FROM TaskMaster_SView  WHERE TM_UserID_FK = @UserID AND TM_IsArchived = 0
 				IF @TaskCount > 500
 				BEGIN
-					SELECT 1 AS STATUS, 'Limit exceeded for anonymous user, try deleting older tasks.' , '' AS LOGMESSAGE,  '' AS ERRORSTATE, NULL AS RESULT
+					SELECT 1 AS STATUS, 'Limit exceeded for anonymous user, try deleting older tasks.' , '' AS LOGMESSAGE,  NULL AS RESULT
 					RETURN
 				END
 			END
@@ -469,13 +473,13 @@ BEGIN
 				FROM @Tags;
 		END
 
-		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @UserID AS RESULT
+		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE,@UserID AS RESULT
 
 		EXEC GetActiveTasksByUser_SP @UserID
 
 	END TRY
 	BEGIN CATCH
-		SELECT 2 AS STATUS, ERROR_MESSAGE() AS MESSAGE , dbo.FormatedErrorMessage_FUNC() AS LOGMESSAGE,  ERROR_STATE() AS ERRORSTATE, NULL AS RESULT
+		SELECT 2 AS STATUS, ERROR_MESSAGE() AS MESSAGE , dbo.FormatedErrorMessage_FUNC() AS LOGMESSAGE,  NULL AS RESULT
 	END CATCH
 END
 GO
@@ -522,8 +526,7 @@ BEGIN
 				WHERE 
 					TM_ID_PK = @TaskID
 
-				UPDATE TaskTag_Map
-				SET    TT_IsActive = 0
+				DELETE TaskTag_Map
 				WHERE  TT_ID_CPKFK = @TaskID
   
 				IF EXISTS (SELECT 1 FROM @Tags)
@@ -533,18 +536,79 @@ BEGIN
 					FROM @Tags;
 				END
 			END
-			SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @TaskID AS RESULT
+			SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE, @TaskID AS RESULT
 			EXEC GetActiveTasksByUser_SP @UserID
 		END
 		ELSE
 		BEGIN
-			SELECT 1 AS STATUS, 'No record to update' AS MESSAGE, '' AS LOGMESSAGE, -1 AS ERRORSTATE, @TaskID AS RESULT
+			SELECT 1 AS STATUS, 'No record to update' AS MESSAGE, '' AS LOGMESSAGE, @TaskID AS RESULT
 		END
 	END TRY
 	BEGIN CATCH
-		SELECT 2 AS STATUS, ERROR_MESSAGE() AS MESSAGE , dbo.FormatedErrorMessage_FUNC() AS LOGMESSAGE,  ERROR_STATE() AS ERRORSTATE, NULL AS RESULT
+		SELECT 2 AS STATUS, ERROR_MESSAGE() AS MESSAGE , dbo.FormatedErrorMessage_FUNC() AS LOGMESSAGE,  NULL AS RESULT
 	END CATCH
 END
 GO
+
+/*
+
+GO
+CREATE PROCEDURE GetActiveTasksByUser_SP
+    @UserID		LargeKey_UDT,
+	@PageIndex  INT = 0,
+	@PageSize	TINYINT = 25
+AS
+BEGIN 
+	SET NOCOUNT ON;
+
+	DECLARE @TaskID_TV TABLE
+	(TM_ID_PK LargeKey_UDT)
+
+	INSERT INTO @TaskID_TV
+	SELECT 
+	   TM_ID_PK	
+	FROM 
+		TaskMaster_SView 
+	WHERE
+		TM_UserID_FK = @UserID
+	AND
+		TM_IsArchived = 0
+	ORDER BY
+		TM_ID_PK
+	OFFSET @PageIndex * @PageSize ROWS
+	FETCH NEXT @PageSize ROWS ONLY
+
+    SELECT 
+	   TM.TM_ID_PK		AS TaskID,
+	   TM_Title			AS Title,
+	   TM_Description	AS [Description],
+	   TM_Status_FK		AS [Status],
+	   TM_StartTime		AS StartTime,
+	   TM_EndTime		AS EndTime,
+	   TM_Priority_FK	AS [Priority],
+	   TM_UserID_FK		AS UserID
+    FROM 
+		TaskMaster_SView TM
+	INNER JOIN
+		@TaskID_TV TV
+	ON 
+		TM.TM_ID_PK = TV.TM_ID_PK
+	ORDER BY
+		TM_Priority_FK DESC
+
+
+	SELECT 
+		 TT.TT_ID_CPKFK		AS TaskID,
+		 TT.TT_TagID_CPKFK  AS TagID
+	FROM	
+		TaskTagMap_SView TT
+	INNER JOIN
+		@TaskID_TV TV
+	ON 
+		TT.TT_ID_CPKFK = TV.TM_ID_PK
+
+END 
+
+*/
 
 /* End of SP */

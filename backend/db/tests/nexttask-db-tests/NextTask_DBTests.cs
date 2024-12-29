@@ -40,7 +40,6 @@ namespace nexttask_db_tests
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction AddTask_Success_TestAction;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(NextTask_DBTests));
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition addtask_success;
-            Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition addtask_anonymoususer_added;
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction UpdateTask_Success_TestAction;
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition updatetask_success;
             Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition updatetask_title_updated;
@@ -58,7 +57,6 @@ namespace nexttask_db_tests
             this.AddTask_AnonyUserLimit_SuccessData = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestActions();
             AddTask_Success_TestAction = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction();
             addtask_success = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
-            addtask_anonymoususer_added = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
             UpdateTask_Success_TestAction = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.SqlDatabaseTestAction();
             updatetask_success = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
             updatetask_title_updated = new Microsoft.Data.Tools.Schema.Sql.UnitTesting.Conditions.ScalarValueCondition();
@@ -73,7 +71,6 @@ namespace nexttask_db_tests
             // AddTask_Success_TestAction
             // 
             AddTask_Success_TestAction.Conditions.Add(addtask_success);
-            AddTask_Success_TestAction.Conditions.Add(addtask_anonymoususer_added);
             resources.ApplyResources(AddTask_Success_TestAction, "AddTask_Success_TestAction");
             // 
             // addtask_success
@@ -85,16 +82,6 @@ namespace nexttask_db_tests
             addtask_success.NullExpected = false;
             addtask_success.ResultSet = 1;
             addtask_success.RowNumber = 1;
-            // 
-            // addtask_anonymoususer_added
-            // 
-            addtask_anonymoususer_added.ColumnNumber = 3;
-            addtask_anonymoususer_added.Enabled = true;
-            addtask_anonymoususer_added.ExpectedValue = "5";
-            addtask_anonymoususer_added.Name = "addtask_anonymoususer_added";
-            addtask_anonymoususer_added.NullExpected = false;
-            addtask_anonymoususer_added.ResultSet = 3;
-            addtask_anonymoususer_added.RowNumber = 1;
             // 
             // UpdateTask_Success_TestAction
             // 

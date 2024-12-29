@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -15,13 +15,15 @@ import (
 
 func main() {
 	app := app.New(LoadConfig())
+	defer utils.DBClose()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	err := app.Start(ctx)
 	if err != nil {
-		log.Printf("Failed to start app! \n %v", err)
+		utils.Logger(fmt.Sprintf("Failed to start app! %v", err))
+		os.Exit(1)
 	}
 }
 
@@ -30,28 +32,33 @@ func LoadConfig() app.Config {
 
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Couldn't Load local env file. Err: %s", err)
+		utils.Logger("Couldn't Load local env file. Err: %s", err)
+		os.Exit(1)
 	}
 
 	if port, exists := os.LookupEnv("SERVER_PORT"); exists {
 		cfg.ServerPort, err = strconv.Atoi(port)
 		if err != nil {
-			log.Fatalf("Invalid server port in env: %s", err)
+			utils.Logger("Invalid server port in env: %s", err)
+			os.Exit(1)
 		}
 	} else {
-		log.Fatalf("Missing required environment variable: SERVER_PORT")
+		utils.Logger("Missing required environment variable: SERVER_PORT")
+		os.Exit(1)
 	}
 
 	if sqlServerCs, exists := os.LookupEnv("SQL_SERVER_CS"); exists {
 		cfg.SqlServerCs = sqlServerCs
 	} else {
-		log.Fatalf("Missing required environment variable: SQL_SERVER_CS")
+		utils.Logger("Missing required environment variable: SQL_SERVER_CS")
+		os.Exit(1)
 	}
 
-	sqlErr := utils.HealthCheckSQLServer(cfg.SqlServerCs)
+	sqlErr := utils.DBInit(cfg.SqlServerCs)
 
 	if sqlErr != nil {
-		log.Fatalf("Shutting down!\n%s", sqlErr)
+		utils.Logger("Shutting down! %s", sqlErr)
+		os.Exit(1)
 	}
 	return cfg
 }
