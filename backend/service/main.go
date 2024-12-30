@@ -16,13 +16,13 @@ import (
 func main() {
 	app := app.New(LoadConfig())
 	defer utils.DBClose()
-
+	defer utils.CloseFileLogger()
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
 	err := app.Start(ctx)
 	if err != nil {
-		utils.Logger(fmt.Sprintf("Failed to start app! %v", err))
+		utils.Logger(fmt.Sprintf("Failed to start app! %v", err)) // wont log file since its not setup yet
 		os.Exit(1)
 	}
 }
@@ -60,5 +60,7 @@ func LoadConfig() app.Config {
 		utils.Logger("Shutting down! %s", sqlErr)
 		os.Exit(1)
 	}
+
+	go utils.SetupLogFile("next_task")
 	return cfg
 }

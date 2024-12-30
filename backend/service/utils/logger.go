@@ -10,8 +10,5 @@ import (
 func Logger(msg string, args ...any) {
 	msg = fmt.Sprintf(msg, args...)
 	log.Println(msg)
-}
-
-func WriteLog_File() {
-
+	FileLog(msg)
 }
