@@ -119,11 +119,12 @@
   </resheader>
   <data name="AddTask_Success_TestAction.SqlScript" xml:space="preserve">
     <value>-- database unit test for dbo.AddTask_SP
+BEGIN TRAN 
 DECLARE @UserID AS [dbo].[LargeKey_UDT], @Title AS NVARCHAR (100)= 'Test Task 1', 
 		@Priority AS [dbo].[LookupKey_UDT] = 5, @Tags AS [dbo].[TaskTag_UDTT];
 
 EXECUTE [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL, @Priority, @Tags;
-
+ROLLBACK
 
 </value>
   </data>
@@ -135,7 +136,7 @@ Assumptions
 * Task Master is empty
 
 */
-
+BEGIN TRAN 
 DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[User_Master_SEQ] ,
 		@TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
 		@Title AS NVARCHAR (100)= 'TEST',
@@ -178,7 +179,7 @@ INSERT INTO [dbo].[Task_Master]
 SET    @Title = 'TEST UPDATED'
     
 EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
-
+ROLLBACK
 
 
 
@@ -192,7 +193,7 @@ Assumptions
 * Task Master is empty
 
 */
-
+BEGIN TRAN 
 DECLARE 
 		@UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[User_Master_SEQ] ,
 		@TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
@@ -234,7 +235,7 @@ INSERT INTO [dbo].[Task_Master]
 
 
 EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
-
+ROLLBACK
 
 
 </value>
@@ -248,7 +249,7 @@ Assumptions
 * Task Master is empty
 
 */
-
+BEGIN TRAN
 DECLARE @TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
 		@Title AS NVARCHAR (100) = 'TEST UPDATED',
 		@Priority AS [dbo].[LookupKey_UDT] = 5, 
@@ -260,7 +261,7 @@ DECLARE @TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq]
 -- End
 
 EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
-
+ROLLBACK
 
 
 
@@ -269,6 +270,7 @@ EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Ta
   <data name="AddTask_AnonyUserLimit_Success_TestAction.SqlScript" xml:space="preserve">
     <value>-- database unit test for dbo.AddTask_SP
 -- Checking the limit of tasks that can be added by anonymous user
+BEGIN TRAN 
 DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR User_Master_SEQ,
 		@UserType AS [dbo].[LookupKey_UDT] = 5, 
 		@Counter AS INT = 1,
@@ -319,7 +321,9 @@ BEGIN
     SET @Counter = @Counter + 1;
 END;
 
-EXECUTE  [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL,@Priority, @Tags;</value>
+
+EXECUTE  [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL,@Priority, @Tags;
+ROLLBACK</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>

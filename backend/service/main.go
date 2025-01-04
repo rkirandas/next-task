@@ -54,6 +54,13 @@ func LoadConfig() app.Config {
 		os.Exit(1)
 	}
 
+	if secret, exists := os.LookupEnv("SECRET"); exists {
+		utils.SetSecretKey(secret)
+	} else {
+		utils.Logger("Missing required environment variable: SECRET")
+		os.Exit(1)
+	}
+
 	sqlErr := utils.DBInit(cfg.SqlServerCs)
 
 	if sqlErr != nil {

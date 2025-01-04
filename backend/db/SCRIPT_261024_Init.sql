@@ -93,8 +93,6 @@ CREATE TABLE User_Master(
 	UM_CreatedAt Time_UDT NOT NULL DEFAULT  DATEDIFF_BIG(millisecond, '1970-01-01 00:00:00', GETUTCDATE()),
     FOREIGN KEY (UM_UserType_FK) REFERENCES UserType_Lookup(UTL_ID_PK),
 );
-
-
 GO
 
 CREATE SEQUENCE Task_Master_SEQ
@@ -368,31 +366,27 @@ END
 --END;
 GO
 CREATE PROCEDURE addUser_SP
-    @Name NVARCHAR(500) = NULL,
 	@UserType LookupKey_UDT = 5, -- Anonymous default
-	@ReturnValue LargeKey_UDT = NULL OUT
+	@RetUserID LargeKey_UDT = NULL OUT,
+	@RetName  VARCHAR(50) = NULL OUT
 AS
 BEGIN 
 	SET NOCOUNT ON;
 
-	DECLARE @UserID LargeKey_UDT = NEXT VALUE FOR User_Master_SEQ;
+	-- Current Scope is for anonymous user
+	SET @RetUserID = NEXT VALUE FOR User_Master_SEQ;
 	BEGIN TRY
-		IF @Name IS NULL AND @UserType = 5
-		BEGIN
-			SET @Name = 'Anony-' + CAST(NEWID() AS VARCHAR(50))
-		END
-
+		SET @RetName =  CAST(NEWID() AS VARCHAR(50))
 		INSERT INTO User_Master(
 				UM_ID_PK,
 				UM_UserType_FK,
 				UM_Name)
 		VALUES (
-		        @UserID,
+		        @RetUserID,
 				@UserType,
-				@Name
+				@RetName
 				);
 
-		SET @ReturnValue = @UserID
 	END TRY
 	BEGIN CATCH
 		SELECT 2 AS STATUS, ERROR_MESSAGE() AS MESSAGE , dbo.FormatedErrorMessage_FUNC() AS LOGMESSAGE, NULL AS RESULT
@@ -417,11 +411,13 @@ BEGIN
 	BEGIN TRY
 		DECLARE @TaskID LargeKey_UDT = NEXT VALUE FOR Task_Master_Seq;
 		DECLARE @NewStatusID LookupKey_UDT = 5;
+		DECLARE @UserName VARCHAR(50);
 
 		IF @UserID IS NULL -- Anonymous
 		BEGIN
 			EXEC AddUser_SP
-				@ReturnValue = @UserID OUTPUT
+				@RetUserID = @UserID OUTPUT,
+				@RetName = @UserName OUTPUT
 
 			IF @UserID IS NULL
 			BEGIN
@@ -473,7 +469,7 @@ BEGIN
 				FROM @Tags;
 		END
 
-		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE,@UserID AS RESULT
+		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE,@UserName AS RESULT
 
 		EXEC GetActiveTasksByUser_SP @UserID
 
