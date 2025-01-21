@@ -15,11 +15,16 @@ import (
 var db *sql.DB
 var Err_Business = errors.New("business error")
 
-type status struct {
+type Status struct {
 	Status     int
 	Message    string
 	LogMessage string
 	Result     any
+}
+
+type SPResult struct {
+	Status          Status
+	IsBusinessError bool
 }
 
 // DBInit checks connectivity to SQL Server also acts as initalizer
@@ -43,14 +48,14 @@ func DBClose() {
 }
 
 // ExecuteSP executes the given SP name and returns the result map
+//
 // TODO Unit test
 // 1. transaction commit / rollback
-// 2.
-func ExecuteSP(sp string, result any, params any, fieldsOmit string) (error, bool) {
+func ExecuteSP(sp string, result any, params any, fieldsOmit string) (SPResult, error) {
 	if db == nil {
 		err := errors.New("connection not established to DB(check if DBInit is called at startup)")
 		Logger("%v", err)
-		return err, false
+		return SPResult{}, err
 	}
 
 	tx, err := db.Begin()
@@ -60,15 +65,14 @@ func ExecuteSP(sp string, result any, params any, fieldsOmit string) (error, boo
 
 	defer func() {
 		if err != nil {
-			Logger("Rolling back %s.", sp)
 			err := tx.Rollback()
 			if err != nil {
-				Logger("Rollback failed")
+				Logger("Rollback failed for %s. %v", sp, err)
 			}
 		} else {
 			err = tx.Commit()
 			if err != nil {
-				Logger("Commit failed")
+				Logger("Commit failed for %s. %v", sp, err)
 			}
 		}
 	}()
@@ -81,24 +85,23 @@ func ExecuteSP(sp string, result any, params any, fieldsOmit string) (error, boo
 	rows, err := tx.Query(sp, args...)
 	if err != nil {
 		Logger("Failed to exec %s: `%v`", sp, err)
-		return err, false
+		return SPResult{}, err
 	}
 
 	defer rows.Close()
 
-	err, isBusinessErr := parseRows(rows, result)
+	res, err := parseRows(rows, result)
 	if err != nil {
-		if isBusinessErr {
-			return err, true
+		if !res.IsBusinessError {
+			Logger("Failed to parse result set for %s: `%v`", sp, err)
 		}
-		Logger("Failed to parse result set for %s: `%v`", sp, err)
-		return err, false
+		return res, err
 	}
 
-	return nil, false
+	return res, nil
 }
 
-// converts input struct to array of sql.NamedArg.
+// Converts input struct to array of sql.NamedArg.
 //
 // Limitation: Can only traverse structs 2 levels down.
 // Unit test
@@ -136,7 +139,8 @@ func prepareArgs(params any, args *[]any, omitFields string) {
 // no result case
 // status case 1- busns err, internal, success
 // result is array of struct
-func parseRows(rows *sql.Rows, result any) (error, bool) {
+func parseRows(rows *sql.Rows, result any) (SPResult, error) {
+	var spResult SPResult
 	var schema reflect.Value
 	var res reflect.Value
 	if result != nil {
@@ -148,28 +152,29 @@ func parseRows(rows *sql.Rows, result any) (error, bool) {
 		for rows.Next() {
 			cols, err := rows.Columns()
 			if err != nil {
-				return err, false
+				return spResult, err
 			}
 			if strings.Join(cols, ",") == ColumnSet_Status {
-				var status status
+				var status Status
 				if err := rows.Scan(&status.Status, &status.Message, &status.LogMessage, &status.Result); err != nil {
-					return err, false
+					return spResult, err
 				}
 
 				if status.Status == DBStatus_Success {
 					if result != nil {
+						spResult.Status = status
 						continue
 					}
-					return nil, false
+					return SPResult{Status: status}, nil
 				}
 
 				if status.Status == DBStatus_BusinessError {
-					return fmt.Errorf("%w : %v", Err_Business, status.Message), true
+					return SPResult{IsBusinessError: true}, fmt.Errorf("%w : %v", Err_Business, status.Message)
 				}
 
 				if status.Status == DBStatus_InternalError {
 					Logger("DB Error %s %s", status.Message, status.LogMessage)
-					return fmt.Errorf("db error"), false
+					return spResult, fmt.Errorf("db error")
 				}
 			}
 
@@ -180,7 +185,7 @@ func parseRows(rows *sql.Rows, result any) (error, bool) {
 			}
 
 			if err := rows.Scan(rowPointers...); err != nil {
-				return err, false
+				return spResult, err
 			}
 
 			for i, col := range cols {
@@ -198,10 +203,10 @@ func parseRows(rows *sql.Rows, result any) (error, bool) {
 	}
 
 	if err := rows.Err(); err != nil {
-		return err, false
+		return spResult, err
 	}
 
-	return nil, false
+	return spResult, nil
 }
 
 /*

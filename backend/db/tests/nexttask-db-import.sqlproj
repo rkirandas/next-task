@@ -58,42 +58,5 @@
   <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
     <Folder Include="Properties" />
-    <Folder Include="dbo\" />
-    <Folder Include="dbo\Tables\" />
-    <Folder Include="dbo\Views\" />
-    <Folder Include="dbo\Functions\" />
-    <Folder Include="dbo\Stored Procedures\" />
-    <Folder Include="dbo\User Defined Types\" />
-    <Folder Include="dbo\Sequences\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Build Include="dbo\Tables\TaskStatus_Lookup.sql" />
-    <Build Include="dbo\Tables\UserType_Lookup.sql" />
-    <Build Include="dbo\Tables\TaskPriority_Lookup.sql" />
-    <Build Include="dbo\Tables\Tag_Lookup.sql" />
-    <Build Include="dbo\Tables\User_Master.sql" />
-    <Build Include="dbo\Tables\Task_Master.sql" />
-    <Build Include="dbo\Tables\TaskTag_Map.sql" />
-    <Build Include="dbo\Views\TaskMaster_SView.sql" />
-    <Build Include="dbo\Views\TaskTagMap_SView.sql" />
-    <Build Include="dbo\Views\UserMaster_SView.sql" />
-    <Build Include="dbo\Functions\FormatedErrorMessage_FUNC.sql" />
-    <Build Include="dbo\Stored Procedures\GetLookups_SP.sql" />
-    <Build Include="dbo\Stored Procedures\GetActiveTasksByUser_SP.sql" />
-    <Build Include="dbo\Stored Procedures\GetTaskDetailsByID_SP.sql" />
-    <Build Include="dbo\Stored Procedures\addUser_SP.sql" />
-    <Build Include="dbo\Stored Procedures\AddTask_SP.sql" />
-    <Build Include="dbo\Stored Procedures\UpdateTask_SP.sql" />
-    <Build Include="dbo\User Defined Types\LargeKey_UDT.sql" />
-    <Build Include="dbo\User Defined Types\LookupKey_UDT.sql" />
-    <Build Include="dbo\User Defined Types\LookupValue_UDT.sql" />
-    <Build Include="dbo\User Defined Types\Description_UDT.sql" />
-    <Build Include="dbo\User Defined Types\Mobile_UDT.sql" />
-    <Build Include="dbo\User Defined Types\Email_UDT.sql" />
-    <Build Include="dbo\User Defined Types\CountryCode_UDT.sql" />
-    <Build Include="dbo\User Defined Types\Time_UDT.sql" />
-    <Build Include="dbo\User Defined Types\TaskTag_UDTT.sql" />
-    <Build Include="dbo\Sequences\User_Master_SEQ.sql" />
-    <Build Include="dbo\Sequences\Task_Master_SEQ.sql" />
   </ItemGroup>
 </Project>

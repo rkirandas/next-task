@@ -120,10 +120,28 @@
   <data name="AddTask_Success_TestAction.SqlScript" xml:space="preserve">
     <value>-- database unit test for dbo.AddTask_SP
 BEGIN TRAN 
-DECLARE @UserID AS [dbo].[LargeKey_UDT], @Title AS NVARCHAR (100)= 'Test Task 1', 
-		@Priority AS [dbo].[LookupKey_UDT] = 5, @Tags AS [dbo].[TaskTag_UDTT];
+DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR User_Master_SEQ,
+		@Title AS NVARCHAR (100)= 'Test Task 1', 
+		@Priority AS [dbo].[LookupKey_UDT] = 5,
+		@Tags AS [dbo].[TaskTag_UDTT],
+		@UserType AS [dbo].[LookupKey_UDT] = 5, 
+		@Name AS NVARCHAR(500) = 'Anony',
+		@UUID AS CHAR(36);
 
-EXECUTE [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL, @Priority, @Tags;
+
+		INSERT INTO User_Master(
+				UM_ID_PK,
+				UM_UserType_FK,
+				UM_Name)
+		VALUES (
+		        @UserID,
+				@UserType,
+				@Name
+				);	
+	
+		SELECT @UUID = User_Master.UM_UUID  FROM User_Master WHERE UM_ID_PK= @UserID
+
+		EXECUTE [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL, @Priority, @Tags;
 ROLLBACK
 
 </value>
@@ -145,19 +163,21 @@ DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[User_Master_SEQ]
 		@Priority AS [dbo].[LookupKey_UDT] = 5, 
 		@Tags AS [dbo].[TaskTag_UDTT],
 		@IsArchived AS BIT = 0,
-		@Status AS [dbo].[LookupKey_UDT] = 5;
+		@Status AS [dbo].[LookupKey_UDT] = 5,
+		@UUID AS CHAR(36);
 
 -- Pre Req
 
-INSERT INTO [dbo].[User_Master]
-           ([UM_ID_PK]
-           ,[UM_UserType_FK]
-           ,[UM_Name]
-           )
-     VALUES
-           (@UserID
-           ,@UserType
-           ,@Name)
+INSERT INTO User_Master(
+				UM_ID_PK,
+				UM_UserType_FK,
+				UM_Name)
+		VALUES (
+		        @UserID,
+				5,
+				'test'
+				);	
+SELECT @UUID = User_Master.UM_UUID  FROM User_Master WHERE UM_ID_PK= @UserID
 
 INSERT INTO [dbo].[Task_Master]
            ([TM_ID_PK]
@@ -178,7 +198,7 @@ INSERT INTO [dbo].[Task_Master]
 	
 SET    @Title = 'TEST UPDATED'
     
-EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
+EXECUTE [dbo].[UpdateTask_SP]  @UUID,@UserID,@TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
 ROLLBACK
 
 
@@ -186,14 +206,7 @@ ROLLBACK
 </value>
   </data>
   <data name="ArchiveTask_Success_TestAction.SqlScript" xml:space="preserve">
-    <value>-- database unit test for dbo.UpdateTask_SP
-/* 
-Assumptions
-------------
-* Task Master is empty
-
-*/
-BEGIN TRAN 
+    <value>BEGIN TRAN 
 DECLARE 
 		@UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[User_Master_SEQ] ,
 		@TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq],
@@ -203,19 +216,25 @@ DECLARE
 		@UserType AS [dbo].[LookupKey_UDT] = 5, 
 		@Tags AS [dbo].[TaskTag_UDTT],
 		@IsArchived AS BIT = 1,
-		@Status AS [dbo].[LookupKey_UDT] = 5;
+		@Status AS [dbo].[LookupKey_UDT] = 5,
+		@UUID AS CHAR(36);
 
 -- Pre Req
 
-INSERT INTO [dbo].[User_Master]
-           ([UM_ID_PK]
-           ,[UM_UserType_FK]
-           ,[UM_Name]
-           )
-     VALUES
-           (@UserID
-           ,@UserType
-           ,@UserName)
+
+
+
+		INSERT INTO User_Master(
+				UM_ID_PK,
+				UM_UserType_FK,
+				UM_Name)
+		VALUES (
+		        @UserID,
+				@UserType,
+				@Name
+				);	
+	
+		SELECT @UUID = User_Master.UM_UUID  FROM User_Master WHERE UM_ID_PK= @UserID
 
 INSERT INTO [dbo].[Task_Master]
            ([TM_ID_PK]
@@ -234,11 +253,8 @@ INSERT INTO [dbo].[Task_Master]
 -- End
 
 
-EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
-ROLLBACK
-
-
-</value>
+EXECUTE [dbo].[UpdateTask_SP]  @UserID, @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
+ROLLBACK</value>
   </data>
   <data name="UpdateTask_Error_TestAction.SqlScript" xml:space="preserve">
     <value>-- database unit test for dbo.UpdateTask_SP
@@ -255,12 +271,25 @@ DECLARE @TaskID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR [dbo].[Task_Master_Seq]
 		@Priority AS [dbo].[LookupKey_UDT] = 5, 
 		@Tags AS [dbo].[TaskTag_UDTT],
 		@IsArchived AS BIT = 0,
-		@Status AS [dbo].[LookupKey_UDT] = 5;
+		@Status AS [dbo].[LookupKey_UDT] = 5,
+		@UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR User_Master_SEQ,
+		@UUID AS CHAR(36);
 
+		INSERT INTO User_Master(
+				UM_ID_PK,
+				UM_UserType_FK,
+				UM_Name)
+		VALUES (
+		        @UserID,
+				5,
+				'test'
+				);	
 
+		SELECT @UUID = User_Master.UM_UUID  FROM User_Master WHERE UM_ID_PK= @UserID
+	
 -- End
 
-EXECUTE [dbo].[UpdateTask_SP]  @TaskID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
+EXECUTE [dbo].[UpdateTask_SP]  @UUID,@TaskID,@UserID, @Title, NULL, NULL, NULL, @Priority, @Tags, @IsArchived, @Status;
 ROLLBACK
 
 
@@ -273,15 +302,16 @@ ROLLBACK
 BEGIN TRAN 
 DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR User_Master_SEQ,
 		@UserType AS [dbo].[LookupKey_UDT] = 5, 
-		@Counter AS INT = 1,
 		@Name AS NVARCHAR(500) = 'Anony',
+		@Counter AS INT = 1,
 		@ReturnValue AS [dbo].[LargeKey_UDT],
 		@Title AS NVARCHAR (100),
 		@Priority AS [dbo].[LookupKey_UDT] = 5, 
 		@Status AS [dbo].[LookupKey_UDT] = 5, 
 		@TaskID AS LargeKey_UDT,
-		@Tags AS [dbo].[TaskTag_UDTT];
-
+		@Tags AS [dbo].[TaskTag_UDTT],
+		@SearchTags AS [dbo].[TaskTag_UDTT],
+		@UUID AS CHAR(36);
 
 
 		INSERT INTO User_Master(
@@ -292,7 +322,10 @@ DECLARE @UserID AS [dbo].[LargeKey_UDT] = NEXT VALUE FOR User_Master_SEQ,
 		        @UserID,
 				@UserType,
 				@Name
-				);				
+				);	
+	
+		SELECT @UUID = User_Master.UM_UUID  FROM User_Master WHERE UM_ID_PK= @UserID
+
 
 WHILE @Counter &lt;= 1000
 BEGIN
@@ -322,7 +355,8 @@ BEGIN
 END;
 
 
-EXECUTE  [dbo].[AddTask_SP] @UserID, @Title, NULL, NULL, NULL,@Priority, @Tags;
+EXECUTE  [dbo].[AddTask_SP] @UUID, @UserID, @Title, NULL, NULL, NULL,@Priority, @Tags,NULL,NULL,NULL,NULL,NULL,NULL,NULL,@SearchTags;
+
 ROLLBACK</value>
   </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">

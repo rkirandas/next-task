@@ -16,14 +16,15 @@ func SetSecretKey(payload string) {
 }
 
 // GenerateToken signs a payload and returns the token
-func GenerateToken(payload string) (string, error) {
+func GenerateToken(payload string) string {
 	signature, err := getSignature(payload)
 	if err != nil {
-		return "", err
+		Logger("%v", err)
+		return ""
 	}
 
 	token := fmt.Sprintf("%s.%s", payload, base64.StdEncoding.EncodeToString(signature))
-	return token, nil
+	return token
 }
 
 // VerifyToken validates the token

@@ -12,9 +12,9 @@ import (
 )
 
 // GetLookups returns all lookup kv pairs for apps
-func (app *App) GetLookups(w http.ResponseWriter, r *http.Request) {
+func GetLookups(w http.ResponseWriter, r *http.Request) {
 	var lookup []Lookup
-	err, _ := utils.ExecuteSP(Sp_GetLookup, &lookup, nil, "")
+	_, err := utils.ExecuteSP(Sp_GetLookup, &lookup, nil, "")
 	if err != nil {
 		http.Error(w, http_500, http.StatusInternalServerError)
 		return
@@ -33,7 +33,7 @@ func (app *App) GetLookups(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetTaskbyUser gets tasks by user id using pagination
-func (app *App) GetTaskbyUser(w http.ResponseWriter, r *http.Request) {
+func GetTaskbyUser(w http.ResponseWriter, r *http.Request) {
 	var request TaskByUser
 	var response []Tasks
 	var fieldsOmit []string
@@ -50,7 +50,7 @@ func (app *App) GetTaskbyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err, _ = utils.ExecuteSP(Sp_GetActiveTasksByUser, &response, request, strings.Join(fieldsOmit, ""))
+	_, err = utils.ExecuteSP(Sp_GetActiveTasksByUser, &response, request, strings.Join(fieldsOmit, ""))
 	if err != nil {
 		http.Error(w, http_500, http.StatusInternalServerError)
 		return
@@ -67,11 +67,10 @@ func (app *App) GetTaskbyUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // AddTask adds a new task and returns first set of tasks for that user
-func (app *App) AddTask(w http.ResponseWriter, r *http.Request) {
+func AddTask(w http.ResponseWriter, r *http.Request) {
 	var request Task
-	var response []Tasks
 	var fieldsOmit = []string{"IsArchived", "Status"}
-
+	var tasks []Tasks
 	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		utils.Logger("Decoding error on %s: `%v`", Sp_AddTask, err)
@@ -84,14 +83,24 @@ func (app *App) AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err, isBusinessErr := utils.ExecuteSP(Sp_AddTask, &response, request, strings.Join(fieldsOmit, ""))
+	result, err := utils.ExecuteSP(Sp_AddTask, &tasks, request, strings.Join(fieldsOmit, ""))
 	if err != nil {
-		if isBusinessErr {
+		if result.IsBusinessError {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		http.Error(w, http_500, http.StatusInternalServerError)
 		return
+	}
+
+	response := struct {
+		Tasks []Tasks
+		Token string
+	}{
+		Tasks: tasks,
+	}
+	if request.UserID == 0 {
+		response.Token = utils.GenerateToken(result.Status.Result.(string))
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -104,7 +113,7 @@ func (app *App) AddTask(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func (app *App) UpdateTask(w http.ResponseWriter, r *http.Request) {
+func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	var request Task
 	var response []Tasks
 	var fieldsOmit = []string{"UserID"}
@@ -129,9 +138,9 @@ func (app *App) UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err, isBusinessErr := utils.ExecuteSP(Sp_UpdateTask, &response, request, strings.Join(fieldsOmit, ""))
+	result, err := utils.ExecuteSP(Sp_UpdateTask, &response, request, strings.Join(fieldsOmit, ""))
 	if err != nil {
-		if isBusinessErr {
+		if result.IsBusinessError {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

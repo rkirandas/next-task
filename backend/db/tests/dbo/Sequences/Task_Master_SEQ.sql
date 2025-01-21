@@ -1,5 +1,0 @@
-﻿CREATE SEQUENCE [dbo].[Task_Master_SEQ]
-    AS BIGINT
-    START WITH 1
-    INCREMENT BY 1;
-

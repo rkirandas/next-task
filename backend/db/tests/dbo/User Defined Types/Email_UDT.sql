@@ -1,3 +1,0 @@
-﻿CREATE TYPE [dbo].[Email_UDT]
-    FROM VARCHAR (15) NULL;
-

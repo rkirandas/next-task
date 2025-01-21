@@ -1,3 +1,0 @@
-﻿CREATE TYPE [dbo].[Time_UDT]
-    FROM BIGINT NULL;
-

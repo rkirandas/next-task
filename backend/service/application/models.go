@@ -45,8 +45,3 @@ type TaskTags struct {
 type TaskTag_UDTT struct {
 	TagID int32 `json:"tagid"`
 }
-
-type NewUserTask struct {
-	Tasks []Tasks `json:"tags"`
-	Token string  `json:"string"`
-}
