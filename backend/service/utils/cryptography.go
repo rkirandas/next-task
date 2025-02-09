@@ -28,27 +28,26 @@ func GenerateToken(payload string) string {
 }
 
 // VerifyToken validates the token
-func VerifyToken(token string) (string, error) {
+func VerifyToken(token string) bool {
 	parts := strings.Split(token, ".")
 	if len(parts) != 2 {
-		return "", errors.New("invalid token format")
+		return false
 	}
 
-	encodedSignature, payload := parts[0], parts[1]
+	encodedSignature, payload := parts[1], parts[0]
 	signature, err := base64.StdEncoding.DecodeString(encodedSignature)
 	if err != nil {
-		return "", err
+		Logger("%v", err)
+		return false
 	}
 
 	expectedSignature, err := getSignature(payload)
 	if err != nil {
-		return "", err
+		Logger("%v", err)
+		return false
 	}
 
-	if !hmac.Equal(signature, expectedSignature) {
-		return "", errors.New("invalid token signature")
-	}
-	return payload, nil
+	return !hmac.Equal(signature, expectedSignature)
 }
 
 func getSignature(payload string) ([]byte, error) {

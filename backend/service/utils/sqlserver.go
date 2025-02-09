@@ -51,7 +51,7 @@ func DBClose() {
 //
 // TODO Unit test
 // 1. transaction commit / rollback
-func ExecuteSP(sp string, result any, params any, fieldsOmit string) (SPResult, error) {
+func ExecuteSP(sp string, result any, params any, fieldsOmit *[]string) (SPResult, error) {
 	if db == nil {
 		err := errors.New("connection not established to DB(check if DBInit is called at startup)")
 		Logger("%v", err)
@@ -61,6 +61,7 @@ func ExecuteSP(sp string, result any, params any, fieldsOmit string) (SPResult, 
 	tx, err := db.Begin()
 	if err != nil {
 		Logger("Error starting transaction: `%v`", err)
+		return SPResult{}, err
 	}
 
 	defer func() {
@@ -90,12 +91,13 @@ func ExecuteSP(sp string, result any, params any, fieldsOmit string) (SPResult, 
 
 	defer rows.Close()
 
-	res, err := parseRows(rows, result)
-	if err != nil {
+	res, parseErr := parseRows(rows, result)
+	if parseErr != nil {
 		if !res.IsBusinessError {
-			Logger("Failed to parse result set for %s: `%v`", sp, err)
+			err = parseErr
+			Logger("Failed to parse result set for %s: `%v`", sp, parseErr)
 		}
-		return res, err
+		return res, parseErr
 	}
 
 	return res, nil
@@ -104,15 +106,29 @@ func ExecuteSP(sp string, result any, params any, fieldsOmit string) (SPResult, 
 // Converts input struct to array of sql.NamedArg.
 //
 // Limitation: Can only traverse structs 2 levels down.
+//
+// # TODO
+//
 // Unit test
 // non struct fail
 // omit fields are removed
 //
 //	check returns tvp vs normal
-func prepareArgs(params any, args *[]any, omitFields string) {
+func prepareArgs(params any, args *[]any, omitFields *[]string) {
+	var skipParam bool
 	for i := range reflect.TypeOf(params).NumField() {
+		skipParam = false
 		paramType := reflect.TypeOf(params).Field(i)
-		if strings.Contains(omitFields, paramType.Name) {
+		if omitFields != nil {
+			for j := 0; j < len(*omitFields); j++ {
+				if (*omitFields)[j] == paramType.Name {
+					skipParam = true
+					continue
+				}
+			}
+		}
+
+		if skipParam {
 			continue
 		}
 		paramVal := reflect.ValueOf(params).Field(i).Interface()

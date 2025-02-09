@@ -74,6 +74,7 @@ func validate(paramType *reflect.StructField,
 		}
 	case reflect.Int16,
 		reflect.Int32,
+		reflect.Int,
 		reflect.Int64:
 		if paramType.Tag.Get(MinValue_Tag) != "" {
 			paramValInt, _ := strconv.ParseInt(fmt.Sprint(*paramVal), 10, 64)

@@ -12,8 +12,8 @@ GO
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'NextTask_Dev')
 BEGIN
 	USE master;
-	ALTER DATABASE NextTask_Test SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE NextTask_Test;
+	ALTER DATABASE NextTask_Dev SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE NextTask_Dev;
 END
 GO
 
@@ -142,7 +142,7 @@ INSERT INTO TaskStatus_Lookup(SL_ID_PK,SL_Name)
 VALUES (5, 'New'),(10, 'In Progress'),(15,'Completed')  -- added +5 buffer b/w keys to accomodate new lookups 
 
 INSERT INTO UserType_Lookup(UTL_ID_PK,UTL_Name)
-VALUES (5, 'Anonymous'),(10, 'Free')
+VALUES (5, 'Anonymous')
 
 INSERT INTO TaskPriority_Lookup(PL_ID_PK,PL_Name)
 VALUES (5, 'High'),(10, 'Medium'),(15, 'Low')
@@ -323,7 +323,8 @@ BEGIN
 
 	SELECT  UM.UM_ID_PK			AS UserID,
 			UM.UM_Name			AS [Name],
-			UM.UM_UserType_FK	AS UserType
+			UM.UM_UserType_FK	AS UserType,
+			''					AS UUID
 	FROM	UserMaster_SView UM 
 	WHERE	UM_UUID = @UUID
 END
@@ -394,7 +395,7 @@ BEGIN
 		TM.TM_ID_PK,TM.TM_Title,TM.TM_Status_FK,TM.TM_StartTime,TM.TM_EndTime,TM.TM_Description,TM.TM_Priority_FK,TM.TM_UserID_FK	
 	ORDER BY
 		TaskID DESC
-	OFFSET (@PageIndex) * @PageSize ROWS
+	OFFSET @PageIndex * @PageSize ROWS
 	FETCH NEXT @PageSize ROWS ONLY
 END
 
@@ -420,11 +421,12 @@ BEGIN
 
 		SELECT 0 AS STATUS, 'Success' AS MESSAGE, '' AS LOGMESSAGE,NULL AS RESULT
 
-		SELECT @UserID	   AS UserID,
-			   UM.UM_UUID  AS UserUUID,
-			   @Name	   AS [Name]
-		FROM   User_Master_SView UM 
-		WHERE  UM.UM_ID_PK = @UserID
+		SELECT  UM.UM_ID_PK								AS UserID,
+				UM.UM_Name								AS [Name],
+				UM.UM_UserType_FK						AS UserType,
+				CAST ( UM.UM_UUID AS CHAR(36))			AS UUID
+		FROM	UserMaster_SView UM 
+		WHERE	UM.UM_ID_PK = @UserID
 
 	END TRY
 	BEGIN CATCH
