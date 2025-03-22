@@ -12,7 +12,6 @@ import (
 	mssql "github.com/microsoft/go-mssqldb"
 )
 
-var db *sql.DB
 var Err_Business = errors.New("business error")
 
 type Status struct {
@@ -27,65 +26,90 @@ type SPResult struct {
 	IsBusinessError bool
 }
 
-// DBInit checks connectivity to SQL Server also acts as initalizer
+type txClient interface {
+	Rollback() error
+	Commit() error
+	Query(query string, args ...any) (*sql.Rows, error)
+}
+
+type Tran struct {
+	Tx txClient
+}
+
+var conn *sql.DB
+
+// DBInit checks connectivity to SQL Server also acts as initalizer (should be called once)
 func DBInit(connStr string) error {
 	var err error
-	db, err = sql.Open("sqlserver", connStr)
+	conn, err = sql.Open("sqlserver", connStr)
 	if err != nil {
 		return fmt.Errorf("unable to open connection: %w", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return db.PingContext(ctx)
+	err = conn.PingContext(ctx)
+	if err != nil {
+		return fmt.Errorf("connection closed while pinging: %w", err)
+	}
+
+	return nil
+}
+
+func CreateTran() (*Tran, error) {
+	if conn == nil {
+		err := errors.New("DB connection not initialized. Call InitDB first")
+		Logger("%v", err)
+		return nil, err
+	}
+
+	tx, err := conn.Begin()
+	if err != nil {
+		Logger("Error starting transaction: `%v`", err)
+		return nil, err
+	}
+
+	return &Tran{
+		Tx: tx,
+	}, nil
 }
 
 func DBClose() {
-	if db == nil {
+	if conn == nil {
 		return
 	}
-	db.Close()
+	conn.Close()
 }
 
 // ExecuteSP executes the given SP name and returns the result map
-//
-// TODO Unit test
-// 1. transaction commit / rollback
-func ExecuteSP(sp string, result any, params any, fieldsOmit *[]string) (SPResult, error) {
-	if db == nil {
-		err := errors.New("connection not established to DB(check if DBInit is called at startup)")
-		Logger("%v", err)
-		return SPResult{}, err
-	}
+func (tx *Tran) ExecuteSP(sp string, result any, params any, fieldsOmit *[]string) (SPResult, error) {
+	var args []any
+	var err error
 
-	tx, err := db.Begin()
-	if err != nil {
-		Logger("Error starting transaction: `%v`", err)
-		return SPResult{}, err
+	if params != nil {
+		prepareArgs(params, &args, fieldsOmit)
 	}
 
 	defer func() {
 		if err != nil {
-			err := tx.Rollback()
+			err := tx.Tx.Rollback()
 			if err != nil {
 				Logger("Rollback failed for %s. %v", sp, err)
 			}
 		} else {
-			err = tx.Commit()
+			err = tx.Tx.Commit()
 			if err != nil {
 				Logger("Commit failed for %s. %v", sp, err)
 			}
 		}
 	}()
 
-	var args []any
-	if params != nil {
-		prepareArgs(params, &args, fieldsOmit)
-	}
-
-	rows, err := tx.Query(sp, args...)
+	rows, err := tx.Tx.Query(sp, args...)
 	if err != nil {
 		Logger("Failed to exec %s: `%v`", sp, err)
+		return SPResult{}, err
+	}
+	if rows == nil {
 		return SPResult{}, err
 	}
 
@@ -103,17 +127,6 @@ func ExecuteSP(sp string, result any, params any, fieldsOmit *[]string) (SPResul
 	return res, nil
 }
 
-// Converts input struct to array of sql.NamedArg.
-//
-// Limitation: Can only traverse structs 2 levels down.
-//
-// # TODO
-//
-// Unit test
-// non struct fail
-// omit fields are removed
-//
-//	check returns tvp vs normal
 func prepareArgs(params any, args *[]any, omitFields *[]string) {
 	var skipParam bool
 	for i := range reflect.TypeOf(params).NumField() {
@@ -146,15 +159,6 @@ func prepareArgs(params any, args *[]any, omitFields *[]string) {
 	}
 }
 
-// Currently supports 1 result set
-// or 1 status result set + 1 output result set
-//
-// TODO : Look for atl method since all SPs have fixed schema
-// and using refl is overhead.
-// Unit test
-// no result case
-// status case 1- busns err, internal, success
-// result is array of struct
 func parseRows(rows *sql.Rows, result any) (SPResult, error) {
 	var spResult SPResult
 	var schema reflect.Value
@@ -164,7 +168,7 @@ func parseRows(rows *sql.Rows, result any) (SPResult, error) {
 		res = reflect.ValueOf(result).Elem()
 	}
 
-	for cont := true; cont; cont = rows.NextResultSet() {
+	for {
 		for rows.Next() {
 			cols, err := rows.Columns()
 			if err != nil {
@@ -216,6 +220,9 @@ func parseRows(rows *sql.Rows, result any) (SPResult, error) {
 			}
 			res.Set(reflect.Append(res, reflect.Value(schema).Elem()))
 		}
+		if !rows.NextResultSet() {
+			break
+		}
 	}
 
 	if err := rows.Err(); err != nil {
@@ -224,37 +231,3 @@ func parseRows(rows *sql.Rows, result any) (SPResult, error) {
 
 	return spResult, nil
 }
-
-/*
- a bit faster 🍑 not type safe
-
-func parseRows(rows *sql.Rows, result *[]map[string]any) error {
-	cols, err := rows.Columns()
-	if err != nil {
-		return err
-	}
-
-	for rows.Next() {
-		row := make([]any, len(cols))
-		rowPointers := make([]any, len(cols))
-		for i := range row {
-			rowPointers[i] = &row[i]
-		}
-
-		if err := rows.Scan(rowPointers...); err != nil {
-			return err
-		}
-
-		res := make(map[string]any, 0)
-		for i, col := range cols {
-			res[col] = *(rowPointers[i].(*any))
-		}
-		*result = append(*result, res)
-	}
-
-	if err := rows.Err(); err != nil {
-		return err
-	}
-
-	return nil
-}*/

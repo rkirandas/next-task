@@ -14,12 +14,13 @@ import (
 // GetLookups returns all lookup kv pairs for apps
 func GetLookups(w http.ResponseWriter, r *http.Request) {
 	var lookup []Lookup
-	db, err := utils.GetDB()
+
+	tx, err := utils.CreateTran()
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 	}
 
-	_, err = db.ExecuteSP(Sp_GetLookup, &lookup, nil, nil)
+	_, err = tx.ExecuteSP(Sp_GetLookup, &lookup, nil, nil)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -45,12 +46,12 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		UUID string
 	}{getUUIDFromHeader(r)}
 
-	db, err := utils.GetDB()
+	tx, err := utils.CreateTran()
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 	}
 
-	_, err = db.ExecuteSP(Sp_GetUser, &user, uuid, nil)
+	_, err = tx.ExecuteSP(Sp_GetUser, &user, uuid, nil)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -85,12 +86,12 @@ func AddAnonymousUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := utils.GetDB()
+	tx, err := utils.CreateTran()
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 	}
 
-	_, err = db.ExecuteSP(Sp_AddUser, &response, request, nil)
+	_, err = tx.ExecuteSP(Sp_AddUser, &response, request, nil)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -129,12 +130,12 @@ func GetTaskbyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := utils.GetDB()
+	tx, err := utils.CreateTran()
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 	}
 
-	_, err = db.ExecuteSP(Sp_GetActiveTasksByUser, &response, request, &fieldsOmit)
+	_, err = tx.ExecuteSP(Sp_GetActiveTasksByUser, &response, request, &fieldsOmit)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -169,12 +170,12 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := utils.GetDB()
+	tx, err := utils.CreateTran()
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 	}
 
-	result, err := db.ExecuteSP(Sp_AddTask, &tasks, request, &fieldsOmit)
+	result, err := tx.ExecuteSP(Sp_AddTask, &tasks, request, &fieldsOmit)
 	if err != nil {
 		if result.IsBusinessError {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -221,12 +222,12 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := utils.GetDB()
+	tx, err := utils.CreateTran()
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 	}
 
-	result, err := db.ExecuteSP(Sp_UpdateTask, &response, request, &fieldsOmit)
+	result, err := tx.ExecuteSP(Sp_UpdateTask, &response, request, &fieldsOmit)
 	if err != nil {
 		if result.IsBusinessError {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
