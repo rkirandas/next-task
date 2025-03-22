@@ -19,16 +19,17 @@ type FileLogger struct {
 
 var (
 	fileLogger *FileLogger
-	once       sync.Once
 )
 
-// Creates Log File in application residing root directory and ready to write log
+// Creates Log File in application residing root directory and ready to write log.
+// Should be called once else add sync Once
 func SetupLogFile(projName string) {
 	currDir, err := os.Executable()
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
+	// #TODO : Check on linux
 	rootDir := filepath.VolumeName(currDir) + string(filepath.Separator)
 	logDir := filepath.Join(rootDir, projName)
 	filePath := filepath.Join(logDir, "log.txt")
@@ -46,39 +47,50 @@ func SetupLogFile(projName string) {
 	initializeLogger(100, 10*1024, filePath)
 }
 
+// Log message in file
+func FileLog(msg string) {
+	if fileLogger == nil {
+		return
+	}
+
+	fileLogger.fileWriteMessage(msg)
+}
+
+// Close file logger on application exit
+func CloseFileLogger() {
+	if fileLogger != nil {
+		fileLogger.close()
+	}
+}
+
 func initializeLogger(bufferSize, flushSize int, filePath string) {
-	once.Do(func() {
-		fileLogger = &FileLogger{
-			logChan:   make(chan string, bufferSize),
-			flushSize: flushSize,
-		}
+	fileLogger = &FileLogger{}
 
-		// Try to open the log file
-		file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Printf("Failed to open log file: %v. Logs will not be written to a file.", err)
-			fileLogger.file = nil
-		} else {
-			fileLogger.file = file
-		}
-
-		fileLogger.waitGroup.Add(1)
-		go fileLogger.run()
-	})
+	// Try to open the log file
+	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Printf("Failed to open log file: %v. Logs will not be written to a file.", err)
+		fileLogger.file = nil
+		return
+	} else {
+		fileLogger.file = file
+	}
+	fileLogger.logChan = make(chan string, bufferSize)
+	fileLogger.flushSize = flushSize
+	fileLogger.waitGroup.Add(1)
+	go fileLogger.run()
 }
 
 func (l *FileLogger) run() {
-	if l.file != nil {
-		defer l.file.Close()
-	}
+	defer l.file.Close()
 	defer l.waitGroup.Done()
 
 	var buffer strings.Builder
 
 	for msg := range l.logChan {
-		buffer.WriteString(fmt.Sprintf("Logged At %v \n----------------------------\n%s\n----------------------------\n",
+		buffer.WriteString(fmt.Sprintf("[%v] \n----------------------------\n%s\n----------------------------\n",
 			time.Now().Format("2006-01-02 15:04:05"), msg))
-		if buffer.Len() >= l.flushSize && l.file != nil {
+		if buffer.Len() >= l.flushSize {
 			if _, err := l.file.WriteString(buffer.String()); err != nil {
 				log.Printf("Failed to write to log file: %v\n", err)
 			}
@@ -86,7 +98,7 @@ func (l *FileLogger) run() {
 		}
 	}
 
-	if buffer.Len() > 0 && l.file != nil {
+	if buffer.Len() > 0 {
 		if _, err := l.file.WriteString(buffer.String()); err != nil {
 			log.Printf("Failed to write to log file: %v\n", err)
 		}
@@ -101,25 +113,9 @@ func (l *FileLogger) fileWriteMessage(msg string) {
 	}
 }
 
-// Log message in file
-func FileLog(msg string) {
-	if fileLogger == nil {
-		return
-	}
-
-	fileLogger.fileWriteMessage(msg)
-}
-
 func (l *FileLogger) close() {
 	if fileLogger != nil {
 		close(l.logChan)
 		l.waitGroup.Wait()
-	}
-}
-
-// Close file logger on application exit
-func CloseFileLogger() {
-	if fileLogger != nil {
-		fileLogger.close()
 	}
 }

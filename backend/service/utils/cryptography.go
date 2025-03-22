@@ -17,6 +17,9 @@ func SetSecretKey(payload string) {
 
 // GenerateToken signs a payload and returns the token
 func GenerateToken(payload string) string {
+	if payload == "" {
+		return ""
+	}
 	signature, err := getSignature(payload)
 	if err != nil {
 		Logger("%v", err)

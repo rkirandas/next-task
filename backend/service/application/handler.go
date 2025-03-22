@@ -14,7 +14,12 @@ import (
 // GetLookups returns all lookup kv pairs for apps
 func GetLookups(w http.ResponseWriter, r *http.Request) {
 	var lookup []Lookup
-	_, err := utils.ExecuteSP(Sp_GetLookup, &lookup, nil, nil)
+	db, err := utils.GetDB()
+	if err != nil {
+		http.Error(w, Http_500, http.StatusInternalServerError)
+	}
+
+	_, err = db.ExecuteSP(Sp_GetLookup, &lookup, nil, nil)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -40,7 +45,12 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		UUID string
 	}{getUUIDFromHeader(r)}
 
-	_, err := utils.ExecuteSP(Sp_GetUser, &user, uuid, nil)
+	db, err := utils.GetDB()
+	if err != nil {
+		http.Error(w, Http_500, http.StatusInternalServerError)
+	}
+
+	_, err = db.ExecuteSP(Sp_GetUser, &user, uuid, nil)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -75,7 +85,12 @@ func AddAnonymousUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = utils.ExecuteSP(Sp_AddUser, &response, request, nil)
+	db, err := utils.GetDB()
+	if err != nil {
+		http.Error(w, Http_500, http.StatusInternalServerError)
+	}
+
+	_, err = db.ExecuteSP(Sp_AddUser, &response, request, nil)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -114,7 +129,12 @@ func GetTaskbyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = utils.ExecuteSP(Sp_GetActiveTasksByUser, &response, request, &fieldsOmit)
+	db, err := utils.GetDB()
+	if err != nil {
+		http.Error(w, Http_500, http.StatusInternalServerError)
+	}
+
+	_, err = db.ExecuteSP(Sp_GetActiveTasksByUser, &response, request, &fieldsOmit)
 	if err != nil {
 		http.Error(w, Http_500, http.StatusInternalServerError)
 		return
@@ -149,7 +169,12 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := utils.ExecuteSP(Sp_AddTask, &tasks, request, &fieldsOmit)
+	db, err := utils.GetDB()
+	if err != nil {
+		http.Error(w, Http_500, http.StatusInternalServerError)
+	}
+
+	result, err := db.ExecuteSP(Sp_AddTask, &tasks, request, &fieldsOmit)
 	if err != nil {
 		if result.IsBusinessError {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -169,6 +194,7 @@ func AddTask(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
+// UpdateTask updates the existing task data
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	var request Task
 	var response []Tasks
@@ -195,7 +221,12 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := utils.ExecuteSP(Sp_UpdateTask, &response, request, &fieldsOmit)
+	db, err := utils.GetDB()
+	if err != nil {
+		http.Error(w, Http_500, http.StatusInternalServerError)
+	}
+
+	result, err := db.ExecuteSP(Sp_UpdateTask, &response, request, &fieldsOmit)
 	if err != nil {
 		if result.IsBusinessError {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
