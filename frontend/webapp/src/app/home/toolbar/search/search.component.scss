@@ -1,0 +1,25 @@
+.search-wrapper {
+  min-height: 40px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 100%;
+
+  .icon-btn {
+    cursor: pointer;
+    color: black;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-input {
+    font-size: large;
+    height: 25px;
+    border: none;
+    outline: none;
+    flex: 0.9;
+  }
+}

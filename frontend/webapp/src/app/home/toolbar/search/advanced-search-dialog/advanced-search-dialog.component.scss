@@ -1,0 +1,15 @@
+.search-dialog-container {
+  padding: 3em;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Three columns with different widths */
+  gap: 1em;
+  .dialog-actions{
+     grid-column: span 2;
+     display: flex;
+     justify-content: end;
+
+     .dialog-action-button{
+       margin-inline-start: 5px;
+     }
+  }
+}

@@ -1,0 +1,22 @@
+.toolbar {
+  height: 100px;
+  width: 100%;
+
+  .logo-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+  }
+
+  .search-container {
+    flex: 2;
+  }
+
+  .user-icon-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+  }
+}
