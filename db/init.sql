@@ -9,18 +9,18 @@
 TODO - Add description for SPs
 */
 GO
-IF EXISTS (SELECT name FROM sys.databases WHERE name = N'NextTask_Dev')
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'NextTask')
 BEGIN
 	USE master;
-	ALTER DATABASE NextTask_Dev SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE NextTask_Dev;
+	ALTER DATABASE NextTask SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE NextTask;
 END
 GO
 
-CREATE DATABASE NextTask_Dev;
+CREATE DATABASE NextTask;
 GO
 
-USE NextTask_Dev;
+USE NextTask;
 
 /*UDTs*/
 GO
