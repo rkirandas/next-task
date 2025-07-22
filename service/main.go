@@ -7,8 +7,6 @@ import (
 	"os/signal"
 	"strconv"
 
-	"github.com/joho/godotenv"
-
 	app "next-task-svc/application"
 	"next-task-svc/utils"
 )
@@ -30,13 +28,8 @@ func main() {
 func LoadConfig() app.Config {
 	cfg := app.Config{}
 
-	err := godotenv.Load()
-	if err != nil {
-		utils.Logger("Couldn't Load local env file. Err: %s", err)
-		os.Exit(1)
-	}
-
 	if port, exists := os.LookupEnv("SERVER_PORT"); exists {
+		var err error
 		cfg.ServerPort, err = strconv.Atoi(port)
 		if err != nil {
 			utils.Logger("Invalid server port in env: %s", err)
@@ -47,13 +40,6 @@ func LoadConfig() app.Config {
 		os.Exit(1)
 	}
 
-	if sqlServerCs, exists := os.LookupEnv("SQL_SERVER_CS"); exists {
-		cfg.SqlServerCs = sqlServerCs
-	} else {
-		utils.Logger("Missing required environment variable: SQL_SERVER_CS")
-		os.Exit(1)
-	}
-
 	if secret, exists := os.LookupEnv("SECRET"); exists {
 		utils.SetSecretKey(secret)
 	} else {
@@ -61,8 +47,9 @@ func LoadConfig() app.Config {
 		os.Exit(1)
 	}
 
+	cfg.SqlServerCs = fmt.Sprintf("Server=%s;database=%s;user=%s;Password=%s;",
+		os.Getenv("CONTAINER"), os.Getenv("DB"), os.Getenv("USER"), os.Getenv("PASSWORD"))
 	sqlErr := utils.DBInit(cfg.SqlServerCs)
-
 	if sqlErr != nil {
 		utils.Logger("Shutting down! %s", sqlErr)
 		os.Exit(1)

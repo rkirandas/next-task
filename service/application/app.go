@@ -1,6 +1,6 @@
 package application
 
-/*#TODO : Error logging mechanism*/
+/*#TODO(@rkirandas) : Error logging mechanism*/
 import (
 	"context"
 	"fmt"

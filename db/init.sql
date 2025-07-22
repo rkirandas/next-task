@@ -6,7 +6,7 @@
 *FR005 - Delete Task
 *FR006 - Prioritize Tasks
 
-TODO - Add description for SPs
+TODO(@rkirandas) - Add description for SPs
 */
 GO
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'NextTask')
@@ -151,7 +151,7 @@ INSERT INTO Tag_Lookup(TL_Name)
 VALUES ( 'Design'),('Development'),('Production')
 
 
-/** TODO LATER
+/** TODO(@rkirandas) LATER
 -- GO
 --CREATE TABLE Task_Audit(
 --	TA_ID_PK Large_Key_UDT IDENTITY(1,1) PRIMARY KEY,
