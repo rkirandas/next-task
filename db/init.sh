@@ -25,6 +25,7 @@ sleep 5
       CREATE USER [$USER] FOR LOGIN [$USER];
       ALTER ROLE db_datareader ADD MEMBER [$USER];
       ALTER ROLE db_datawriter ADD MEMBER [$USER];
+      GRANT EXECUTE TO [$USER];
   END
   " 
 
