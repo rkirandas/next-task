@@ -8,14 +8,6 @@
 
 TODO(@rkirandas) - Add description for SPs
 */
-GO
-IF EXISTS (SELECT name FROM sys.databases WHERE name = N'NextTask')
-BEGIN
-	USE master;
-	ALTER DATABASE NextTask SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE NextTask;
-END
-GO
 
 CREATE DATABASE NextTask;
 GO
