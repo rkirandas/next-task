@@ -1,19 +1,13 @@
 import { Component, inject } from '@angular/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import {
-  MAT_DIALOG_DATA,
-  MatDialog,
-  MatDialogActions,
-  MatDialogClose,
-  MatDialogContent,
-  MatDialogRef,
-  MatDialogTitle,
+  MatDialog
 } from '@angular/material/dialog';
-import { AdvancedSearchDialog } from './advanced-search-dialog/advanced-search-dialog.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { TodoDialog } from '../../shared/todo-dialog/todo-dialog.component';
 
 @Component({
   selector: 'search',
@@ -25,7 +19,7 @@ export class SearchComponent {
   readonly dialog = inject(MatDialog);
 
   openDialog(): void {
-    const dialogRef = this.dialog.open(AdvancedSearchDialog, {
+    const dialogRef = this.dialog.open(TodoDialog, {
       disableClose: true,
     });
 

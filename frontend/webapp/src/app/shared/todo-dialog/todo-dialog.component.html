@@ -1,6 +1,6 @@
-<div class="search-dialog-container">
+<div class="dialog-container">
   <div class="dialog-actions">
-    <button (click)="onNoClick()" mat-mini-fab aria-label="close search dialog">
+    <button (click)="onNoClick()" mat-mini-fab aria-label="close dialog">
       <mat-icon>close</mat-icon>
     </button>
   </div>
@@ -31,19 +31,25 @@
     </mat-select>
   </mat-form-field>
   <mat-form-field>
-    <mat-label>Task Start Time</mat-label>
+    <mat-label>Start Date</mat-label>
     <input matInput [matDatepicker]="stdatepicker" />
     <mat-datepicker #stdatepicker />
     <mat-datepicker-toggle [for]="stdatepicker" matSuffix />
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Start Time</mat-label>
     <input matInput [matTimepicker]="sttimepicker" />
     <mat-timepicker #sttimepicker />
     <mat-timepicker-toggle [for]="sttimepicker" matSuffix />
   </mat-form-field>
   <mat-form-field>
-    <mat-label>Task End Time</mat-label>
+    <mat-label>End Date</mat-label>
     <input matInput [matDatepicker]="etdatepicker" />
     <mat-datepicker #etdatepicker />
     <mat-datepicker-toggle [for]="etdatepicker" matSuffix />
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>End Time</mat-label>
     <input matInput [matTimepicker]="ettimepicker" />
     <mat-timepicker #ettimepicker />
     <mat-timepicker-toggle [for]="ettimepicker" matSuffix />

@@ -1,9 +1,10 @@
-import {Component} from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { TodoListComponent } from "../app/todo-list/todo-list.component";
+import { ToolbarComponent } from "../app/toolbar/toolbar.component";
 
 @Component({
-  selector: 'app',
-  imports: [RouterOutlet],
-  template: `<router-outlet></router-outlet>`,
+  selector: 'app-home',
+  templateUrl: './app.component.html',
+  imports: [ToolbarComponent,TodoListComponent]
 })
 export class App {}

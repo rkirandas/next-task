@@ -4,7 +4,11 @@
       <mat-spinner></mat-spinner>
     </div>
   }
-  <div class="list-header">
+  <div  class="list-header">
+    <button color="secondary" class="add-new" mat-fab extended>
+      <mat-icon>add</mat-icon>
+      Basic
+    </button>
     <mat-paginator
       [pageSizeOptions]="[5, 10, 25, 100]"
       aria-label="Select page of users"
@@ -57,11 +61,7 @@
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-      <tr
-        mat-row
-        (click)="onRowClick(row)"
-        *matRowDef="let row; columns: displayedColumns"
-      ></tr>
+      <tr mat-row (click)="onRowClick(row)" *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
   </div>
 </div>

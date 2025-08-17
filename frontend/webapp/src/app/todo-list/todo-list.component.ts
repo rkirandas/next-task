@@ -1,16 +1,14 @@
+import { SelectionModel } from '@angular/cdk/collections';
 import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatInputModule } from '@angular/material/input';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { SelectionModel } from '@angular/cdk/collections';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DatePipe } from '@angular/common';
-import { merge, Observable, of as observableOf } from 'rxjs';
-import { catchError, map, startWith, switchMap } from 'rxjs/operators';
-import { MatDialog } from '@angular/material/dialog';
-import { AdvancedSearchDialog } from '../toolbar/search/advanced-search-dialog/advanced-search-dialog.component';
+import { TodoDialog } from '../shared/todo-dialog/todo-dialog.component';
 
 export interface UserData {
   id: string;
@@ -61,6 +59,7 @@ const NAMES: string[] = [
     MatPaginatorModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
+    MatIconModule
   ],
   templateUrl: './todo-list.component.html',
   styleUrl: './todo-list.component.scss',
@@ -125,7 +124,7 @@ export class TodoListComponent implements AfterViewInit {
   }
 
   onRowClick(row?: UserData) {
-    const dialogRef = this.dialog.open(AdvancedSearchDialog, {
+    const dialogRef = this.dialog.open(TodoDialog, {
       disableClose: true,
     });
 
