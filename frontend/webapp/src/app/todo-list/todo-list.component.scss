@@ -1,5 +1,18 @@
+@use '@angular/material' as mat;
+
 .list-container {
   margin-top: 1px;
+
+  .list-header{
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--mat-sys-surface);
+    button{
+     height: 40px;
+    }
+  }
   
   .table-container {
     position: relative;

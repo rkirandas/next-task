@@ -7,10 +7,19 @@
     display: flex;
     align-items: center;
     justify-content: start;
+
+    img {
+      height: 60px;
+    }
+
+    @media (max-width: 767px) {
+      display: none;
+    }
   }
 
   .search-container {
     flex: 2;
+    max-height: 60px;
   }
 
   .user-icon-container {
@@ -18,5 +27,9 @@
     display: flex;
     align-items: center;
     justify-content: end;
+
+    img {
+      height: 60px;
+    }
   }
 }
