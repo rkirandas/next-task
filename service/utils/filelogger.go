@@ -29,7 +29,7 @@ func SetupLogFile(projName string) {
 		fmt.Printf("%v", err)
 		return
 	}
-	// #TODO(@rkirandas) : Check on linux
+	// TODO(@rkirandas) : Check on linux
 	rootDir := filepath.VolumeName(currDir) + string(filepath.Separator)
 	logDir := filepath.Join(rootDir, projName)
 	filePath := filepath.Join(logDir, "log.txt")

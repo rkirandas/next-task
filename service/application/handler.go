@@ -26,8 +26,6 @@ func GetLookups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-
 	jsonData, err := json.Marshal(lookup)
 	if err != nil {
 		utils.Logger("Encoding error on %s: `%v`", Sp_GetLookup, err)

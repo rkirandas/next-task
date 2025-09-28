@@ -1,6 +1,7 @@
 package application
 
 import (
+	"bytes"
 	"net/http"
 	"next-task-svc/utils"
 
@@ -25,6 +26,46 @@ func auth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func cache(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if cachedResponse := utils.Cache(r.URL.Path); cachedResponse != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(cachedResponse)
+			return
+		}
+
+		crw := &customResponseWriter{
+			ResponseWriter: w,
+			body:           &bytes.Buffer{},
+		}
+
+		next(crw, r)
+
+		if crw.statusCode == http.StatusOK || crw.statusCode == 0 {
+			utils.SetCache(crw.body.Bytes(), r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(crw.body.Bytes())
+	}
+}
+
+// Add this custom ResponseWriter structure
+type customResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+	body       *bytes.Buffer
+}
+
+func (crw *customResponseWriter) Write(b []byte) (int, error) {
+	return crw.body.Write(b)
+}
+
+func (crw *customResponseWriter) WriteHeader(statusCode int) {
+	crw.statusCode = statusCode
+	crw.ResponseWriter.WriteHeader(statusCode)
+}
+
 func (a *App) loadRoutes() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
@@ -41,7 +82,7 @@ func (a *App) loadRoutes() {
 }
 
 func (a *App) misc(router chi.Router) {
-	router.Get("/lookup", GetLookups)
+	router.Get("/lookup", cache(GetLookups))
 }
 
 func (a *App) user(router chi.Router) {

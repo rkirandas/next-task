@@ -56,5 +56,6 @@ func LoadConfig() app.Config {
 	}
 
 	go utils.SetupLogFile("next_task")
+	utils.InitCache()
 	return cfg
 }
