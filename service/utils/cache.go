@@ -1,29 +1,72 @@
 package utils
 
-import "time"
+import (
+	"sync"
+	"time"
+)
 
-const TTL = 2
+const (
+	TTL       = 2
+	MAX_ITEMS = 10000 // Limit cache size
+)
 
 type ResponseCache struct {
 	ExpiresAt int64
 	Response  []byte
 }
 
-var responseCache map[string]ResponseCache
+type Cache struct {
+	sync.RWMutex
+	items map[string]ResponseCache
+}
+
+var responseCache *Cache
 
 func InitCache() {
-	responseCache = make(map[string]ResponseCache)
+	responseCache = &Cache{
+		items: make(map[string]ResponseCache),
+	}
+
+	// Start cleanup routine
+	go responseCache.cleanup()
+}
+
+func (c *Cache) cleanup() {
+	ticker := time.NewTicker(10 * time.Minute)
+	for range ticker.C {
+		c.Lock()
+		now := time.Now().Unix()
+		for key, item := range c.items {
+			if now > item.ExpiresAt {
+				delete(c.items, key)
+			}
+		}
+		c.Unlock()
+	}
 }
 
 func SetCache(response []byte, route string) {
-	responseCache[route] = ResponseCache{
+	responseCache.Lock()
+	defer responseCache.Unlock()
+
+	if len(responseCache.items) >= MAX_ITEMS {
+		for k := range responseCache.items {
+			delete(responseCache.items, k)
+			break
+		}
+	}
+
+	responseCache.items[route] = ResponseCache{
 		ExpiresAt: time.Now().Add(time.Hour * TTL).Unix(),
 		Response:  response,
 	}
 }
 
-func Cache(route string) []byte {
-	cache, ok := responseCache[route]
+func GetCache(route string) []byte {
+	responseCache.RLock()
+	defer responseCache.RUnlock()
+
+	cache, ok := responseCache.items[route]
 	if !ok || time.Now().Unix() > cache.ExpiresAt {
 		return nil
 	}

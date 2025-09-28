@@ -28,7 +28,7 @@ func auth(next http.HandlerFunc) http.HandlerFunc {
 
 func cache(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if cachedResponse := utils.Cache(r.URL.Path); cachedResponse != nil {
+		if cachedResponse := utils.GetCache(r.URL.Path); cachedResponse != nil {
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(cachedResponse)
 			return
